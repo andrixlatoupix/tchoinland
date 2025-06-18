@@ -327,20 +327,22 @@ body {
     .game-card {
         padding: 1.5rem;
         margin: 0 0.5rem;
-        /* Forcer les couleurs sur mobile sans backdrop-filter */
-        background: rgba(255, 105, 180, 0.3) !important;
-        border: 2px solid rgba(255, 255, 255, 0.4) !important;
+        /* Couleurs similaires à la version desktop mais forcées pour mobile */
+        background: rgba(255, 255, 255, 0.2) !important;
+        border: 2px solid rgba(255, 255, 255, 0.3) !important;
         backdrop-filter: none !important;
-        /* Fallback pour les appareils qui ne supportent pas backdrop-filter */
-        background-color: rgba(255, 105, 180, 0.3) !important;
+        /* Fallback avec une teinte légèrement colorée pour éviter le blanc pur */
+        background-color: rgba(255, 255, 255, 0.15) !important;
+        /* Ajouter une ombre subtile pour la profondeur */
+        box-shadow: 0 8px 32px rgba(31, 38, 135, 0.2) !important;
     }
     
     .game-card:hover,
     .game-card:active,
     .game-card:focus {
-        background: rgba(255, 105, 180, 0.5) !important;
-        background-color: rgba(255, 105, 180, 0.5) !important;
-        box-shadow: 0 10px 30px rgba(255, 105, 180, 0.4) !important;
+        background: rgba(255, 255, 255, 0.3) !important;
+        background-color: rgba(255, 255, 255, 0.25) !important;
+        box-shadow: 0 15px 35px rgba(255, 105, 180, 0.3) !important;
         transform: translateY(-5px) !important;
     }
     
@@ -406,19 +408,20 @@ body {
     .game-card {
         padding: 1rem;
         margin: 0;
-        /* Forcer les couleurs sur très petits écrans */
-        background: rgba(255, 105, 180, 0.3) !important;
-        border: 2px solid rgba(255, 255, 255, 0.4) !important;
+        /* Couleurs cohérentes avec desktop sur très petits écrans */
+        background: rgba(255, 255, 255, 0.2) !important;
+        border: 2px solid rgba(255, 255, 255, 0.3) !important;
         backdrop-filter: none !important;
-        background-color: rgba(255, 105, 180, 0.3) !important;
+        background-color: rgba(255, 255, 255, 0.15) !important;
+        box-shadow: 0 8px 32px rgba(31, 38, 135, 0.2) !important;
     }
     
     .game-card:hover,
     .game-card:active,
     .game-card:focus {
-        background: rgba(255, 105, 180, 0.5) !important;
-        background-color: rgba(255, 105, 180, 0.5) !important;
-        box-shadow: 0 10px 30px rgba(255, 105, 180, 0.4) !important;
+        background: rgba(255, 255, 255, 0.3) !important;
+        background-color: rgba(255, 255, 255, 0.25) !important;
+        box-shadow: 0 15px 35px rgba(255, 105, 180, 0.3) !important;
         transform: translateY(-5px) !important;
     }
     
