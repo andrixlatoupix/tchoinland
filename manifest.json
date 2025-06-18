@@ -1,0 +1,62 @@
+{
+  "name": "Tchoiland.io - Un petit pas pour l'homme, un gros pas pour la tchoin",
+  "short_name": "Tchoiland.io",
+  "description": "Le parc d'attractions numérique où les rêves en strass deviennent réalité",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ff69b4",
+  "theme_color": "#da70d6",
+  "orientation": "portrait-primary",
+  "categories": ["games", "entertainment"],
+  "lang": "fr",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23ff69b4'/><text x='50' y='65' font-size='60' text-anchor='middle' fill='white'>💅</text></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23da70d6'/><text x='50' y='65' font-size='50' text-anchor='middle' fill='white'>💅</text></svg>",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 375 667'><rect width='375' height='667' fill='url(%23grad1)'/><defs><linearGradient id='grad1' x1='0%' y1='0%' x2='100%' y2='100%'><stop offset='0%' style='stop-color:%23ff69b4'/><stop offset='100%' style='stop-color:%23da70d6'/></linearGradient></defs><text x='187' y='100' font-size='24' text-anchor='middle' fill='white'>🦄 TCHOILAND.IO 💅</text><text x='187' y='130' font-size='14' text-anchor='middle' fill='white'>Un petit pas pour l'homme, un gros pas pour la tchoin</text></svg>",
+      "sizes": "375x667",
+      "type": "image/svg+xml",
+      "label": "Page d'accueil de Tchoiland.io"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "TchoinGPT",
+      "short_name": "TchoinGPT",
+      "description": "L'IA la plus sage du game",
+      "url": "/?game=tchoingpt",
+      "icons": [
+        {
+          "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23667eea'/><text x='50' y='65' font-size='40' text-anchor='middle' fill='white'>🤖</text></svg>",
+          "sizes": "96x96",
+          "type": "image/svg+xml"
+        }
+      ]
+    },
+    {
+      "name": "Tchoinom&egrave;tre",
+      "short_name": "Tchoinom&egrave;tre",
+      "description": "Mesure ton taux de tchoinitude",
+      "url": "/?game=tchoinometer",
+      "icons": [
+        {
+          "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23f093fb'/><text x='50' y='65' font-size='40' text-anchor='middle' fill='white'>📸</text></svg>",
+          "sizes": "96x96",
+          "type": "image/svg+xml"
+        }
+      ]
+    }
+  ]
+}

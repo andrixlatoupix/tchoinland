@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🦄 Tchoiland.io - Un petit pas pour l'homme, un gros pas pour la tchoin 💅</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💅</text></svg>">
+</head>
+<body>
+    <div class="sparkle-bg"></div>
+    
+    <header class="header">
+        <div class="logo-container">
+            <h1 class="logo bouncy-text">🦄 TCHOILAND.IO 💅</h1>
+            <p class="slogan glitter-text">Un petit pas pour l'homme, un gros pas pour la tchoin.</p>
+        </div>
+        <button class="music-toggle" id="musicToggle">🎵</button>
+    </header>
+
+    <main class="game-grid">
+        <div class="game-card" data-game="quizz">
+            <div class="card-icon">🧠✨</div>
+            <h3>Qui veut être une Tchoin ?</h3>
+            <p>Des questions absurdes pour briller en société</p>
+        </div>
+
+        <div class="game-card" data-game="tchoingpt">
+            <div class="card-icon">🤖💋</div>
+            <h3>TchoinGPT</h3>
+            <p>L'IA la plus sage (ou débile) du game</p>
+        </div>
+
+        <div class="game-card" data-game="tchoin-or-not">
+            <div class="card-icon">👀💎</div>
+            <h3>Tchoin or Not Tchoin</h3>
+            <p>Juge avec ton cœur, trompe-toi avec style</p>
+        </div>
+
+        <div class="game-card" data-game="flappy">
+            <div class="card-icon">🕊️💅</div>
+            <h3>Flappy Tchoin</h3>
+            <p>Vole comme un faux-cil dans le vent</p>
+        </div>
+
+        <div class="game-card" data-game="tchoinometer">
+            <div class="card-icon">📸✨</div>
+            <h3>Tchoinom&egrave;tre</h3>
+            <p>Mesure ton taux de tchoinitude officiel</p>
+        </div>
+
+        <div class="game-card" data-game="championship">
+            <div class="card-icon">🏆💄</div>
+            <h3>Championnat Mondial</h3>
+            <p>Défis pour devenir la tchoin suprême</p>
+        </div>
+
+        <div class="game-card" data-game="rap-battle">
+            <div class="card-icon">🎤🔥</div>
+            <h3>Tchoin Rap Battle</h3>
+            <p>Rime comme si ta life en dépendait</p>
+        </div>
+
+        <div class="game-card" data-game="facts">
+            <div class="card-icon">🧪📚</div>
+            <h3>Tchoin Facts™</h3>
+            <p>Des vérités scientifiques qui changent des vies</p>
+        </div>
+
+        <div class="game-card" data-game="tchoinmeni">
+            <div class="card-icon">⚽💅</div>
+            <h3>Aur&eacute;lien Tchoinm&eacute;ni</h3>
+            <p>Le milieu de terrain le plus stylé du game</p>
+        </div>
+
+        <div class="game-card" data-game="tinder-tchoin">
+            <div class="card-icon">💖👩‍🦳</div>
+            <h3>Tinder des Tchoin</h3>
+            <p>Swipe right sur les vrais queen du game !</p>
+        </div>
+
+        <div class="game-card" data-game="tchoin-academy">
+            <div class="card-icon">🎓💄</div>
+            <h3>Tchoin Academy</h3>
+            <p>Cours intensif pour devenir une vraie boss</p>
+        </div>
+    </main>
+
+    <!-- Game Screens (hidden by default) -->
+    <div id="game-screen" class="game-screen hidden">
+        <button class="back-btn" id="backBtn">← Retour au lobby</button>
+        <div id="game-content"></div>
+    </div>
+
+    <footer class="footer">
+        <p>Made with 💅 and ✨ | Tchoiland.io © 2025</p>
+    </footer>
+
+    <audio id="backgroundMusic" loop preload="auto">
+        <source src="Reine de la Tchoin.mp3" type="audio/mpeg">
+    </audio>
+
+    <script src="script.js"></script>
+</body>
+</html>
