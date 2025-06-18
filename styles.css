@@ -303,6 +303,12 @@ body {
         margin: 0 0.5rem;
         width: calc(100% - 1rem);
         max-width: 95vw;
+        /* Harmoniser avec les cartes de jeux sur mobile */
+        background: linear-gradient(135deg, rgba(255, 105, 180, 0.4), rgba(218, 112, 214, 0.4)) !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        border: 3px solid rgba(255, 255, 255, 0.6) !important;
+        box-shadow: 0 8px 32px rgba(255, 105, 180, 0.3) !important;
     }
     
     .logo {
@@ -397,6 +403,12 @@ body {
         margin: 0 0.3rem;
         width: calc(100% - 0.6rem);
         max-width: 98vw;
+        /* Harmoniser avec les cartes de jeux sur très petits écrans */
+        background: linear-gradient(135deg, rgba(255, 105, 180, 0.4), rgba(218, 112, 214, 0.4)) !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        border: 3px solid rgba(255, 255, 255, 0.6) !important;
+        box-shadow: 0 8px 32px rgba(255, 105, 180, 0.3) !important;
     }
     
     .logo {
@@ -461,6 +473,12 @@ body {
         padding: 0.5rem !important;
         margin: 0 0.2rem !important;
         width: calc(100% - 0.4rem) !important;
+        /* Harmoniser avec les cartes de jeux sur écrans extra petits */
+        background: linear-gradient(135deg, rgba(255, 105, 180, 0.4), rgba(218, 112, 214, 0.4)) !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        border: 3px solid rgba(255, 255, 255, 0.6) !important;
+        box-shadow: 0 8px 32px rgba(255, 105, 180, 0.3) !important;
     }
 }
 

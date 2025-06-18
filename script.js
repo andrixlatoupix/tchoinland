@@ -42,9 +42,18 @@ class TchoinlandApp {
     }
 
     setupMusic() {
-        // Gestion de la vraie musique "Reine de la Tchoin" 🎵👑
+        // Gestion de la playlist tchoin 🎵👑
         this.backgroundMusic = document.getElementById('backgroundMusic');
         this.musicLoaded = false;
+        
+        // Playlist des chansons tchoin
+        this.tchoinPlaylist = [
+            "Reine de la Tchoin.mp3",
+            "tchoin tchoin tchoin tchoin tchoin tchoi.mp3", 
+            "tchoin tchoin tchoin tchoin tchoin tchoi (1).mp3",
+            "tchoin tchoin tchoin tchoin tchoin tchoi (2).mp3"
+        ];
+        this.currentSongIndex = 0;
         
         // Web Audio Context pour les effets sonores
         this.audioContext = null;
@@ -71,10 +80,10 @@ class TchoinlandApp {
             console.log('🎵🎉 "Reine de la Tchoin" est maintenant en cours de lecture !');
         });
 
-        // Quand la musique se termine, on la relance depuis le début
+        // Quand la musique se termine, on passe à la suivante
         this.backgroundMusic.addEventListener('ended', () => {
-            console.log('🎵✨ "Reine de la Tchoin" terminée ! On relance le hit ! 💅🔥');
-            this.startMusicFromRandomPosition();
+            console.log('🎵✨ Chanson terminée ! On passe au hit suivant ! 💅🔥');
+            this.playNextSong();
         });
 
         // Auto-play quand possible (après interaction utilisateur)
@@ -101,11 +110,52 @@ class TchoinlandApp {
         
         // Démarrer la musique si activée
         if (this.musicEnabled && this.musicLoaded) {
-            this.startMusicFromRandomPosition();
+            this.startRandomSong();
         } else if (this.musicEnabled && !this.musicLoaded) {
             // Si la musique n'est pas encore chargée, attendre
             setTimeout(() => this.tryAutoPlay(), 1000);
         }
+    }
+
+    startRandomSong() {
+        // Choisir une chanson aléatoire au démarrage
+        this.currentSongIndex = Math.floor(Math.random() * this.tchoinPlaylist.length);
+        const randomSong = this.tchoinPlaylist[this.currentSongIndex];
+        console.log('🎵🎲 Chanson aléatoire sélectionnée:', randomSong);
+        
+        this.backgroundMusic.src = randomSong;
+        this.backgroundMusic.load();
+        
+        this.backgroundMusic.addEventListener('loadedmetadata', () => {
+            // Position aléatoire dans la chanson
+            const randomPosition = Math.random() * (this.backgroundMusic.duration - 30);
+            this.backgroundMusic.currentTime = randomPosition;
+            console.log('🎵⏯️ Démarrage à la position:', Math.round(randomPosition), 'secondes');
+            
+            this.backgroundMusic.play().catch(e => {
+                console.log('🎵❌ Lecture bloquée par le navigateur:', e);
+            });
+        }, { once: true });
+    }
+    
+    playNextSong() {
+        // Passer à la chanson suivante dans la playlist
+        this.currentSongIndex = (this.currentSongIndex + 1) % this.tchoinPlaylist.length;
+        const nextSong = this.tchoinPlaylist[this.currentSongIndex];
+        console.log('🎵⏭️ Chanson suivante:', nextSong);
+        
+        this.backgroundMusic.src = nextSong;
+        this.backgroundMusic.load();
+        
+        this.backgroundMusic.addEventListener('loadedmetadata', () => {
+            // Position aléatoire dans la nouvelle chanson
+            const randomPosition = Math.random() * (this.backgroundMusic.duration - 30);
+            this.backgroundMusic.currentTime = randomPosition;
+            
+            this.backgroundMusic.play().catch(e => {
+                console.log('🎵❌ Lecture suivante bloquée:', e);
+            });
+        }, { once: true });
     }
 
     startMusicFromRandomPosition() {
@@ -348,6 +398,18 @@ class TchoinlandApp {
                 break;
             case 'tchoin-academy':
                 this.loadTchoinAcademy(content);
+                break;
+            case 'tchoin-catch':
+                this.loadTchoinCatch(content);
+                break;
+            case 'tchoin-memory':
+                this.loadTchoinMemory(content);
+                break;
+            case 'tchoin-tap':
+                this.loadTchoinTap(content);
+                break;
+            case 'tchoin-slide':
+                this.loadTchoinSlide(content);
                 break;
         }
     }
@@ -2260,6 +2322,914 @@ Maintenant, sois TchoinGPT dans toute ta splendeur intelligente et délirante ! 
         };
 
         showCourseMenu();
+    }
+
+    // NOUVEAUX MINI-JEUX INTERACTIFS ! 🎮✨
+
+    loadTchoinCatch(container) {
+        let score = 0;
+        let gameActive = false;
+        let gameSpeed = 2000;
+        let catchElements = [];
+
+        container.innerHTML = `
+            <div class="tchoin-catch-game">
+                <h2>💅🎯 Catch the Tchoin</h2>
+                <div class="game-info">
+                    <div class="score-display">Score: <span id="catch-score">0</span></div>
+                    <div class="lives-display">💄💄💄</div>
+                </div>
+                <div class="catch-area" id="catch-area"></div>
+                <button class="start-btn" id="start-catch">🚀 Start Catching !</button>
+                <div class="instructions">👆 Tape sur les tchoin qui tombent pour marquer des points ! 💅</div>
+            </div>
+        `;
+
+        const catchArea = container.querySelector('#catch-area');
+        const scoreEl = container.querySelector('#catch-score');
+        const livesEl = container.querySelector('.lives-display');
+        const startBtn = container.querySelector('#start-catch');
+        
+        const tchoinEmojis = ['💅', '👑', '💄', '✨', '💎', '🦄', '👩‍🦳', '💋'];
+        let lives = 3;
+
+        const createFallingTchoin = () => {
+            if (!gameActive) return;
+            
+            const tchoin = document.createElement('div');
+            tchoin.className = 'falling-tchoin';
+            tchoin.textContent = tchoinEmojis[Math.floor(Math.random() * tchoinEmojis.length)];
+            tchoin.style.left = Math.random() * (catchArea.offsetWidth - 50) + 'px';
+            tchoin.style.top = '-50px';
+            tchoin.style.position = 'absolute';
+            tchoin.style.fontSize = '2rem';
+            tchoin.style.cursor = 'pointer';
+            tchoin.style.userSelect = 'none';
+            tchoin.style.transition = \`top \${3000 + Math.random() * 2000}ms linear\`;
+            
+            catchArea.appendChild(tchoin);
+            catchElements.push(tchoin);
+
+            // Animation de chute
+            setTimeout(() => {
+                tchoin.style.top = catchArea.offsetHeight + 'px';
+            }, 10);
+
+            // Clic pour attraper
+            tchoin.addEventListener('click', () => {
+                if (gameActive) {
+                    score += 10;
+                    scoreEl.textContent = score;
+                    this.playBeep(600, 100);
+                    
+                    // Animation d'explosion
+                    tchoin.style.transform = 'scale(2) rotate(360deg)';
+                    tchoin.style.opacity = '0';
+                    setTimeout(() => tchoin.remove(), 300);
+                }
+            });
+
+            // Si pas attrapé
+            setTimeout(() => {
+                if (tchoin.parentNode && gameActive) {
+                    lives--;
+                    this.playBeep(200, 300);
+                    livesEl.textContent = '💄'.repeat(lives);
+                    tchoin.remove();
+                    
+                    if (lives <= 0) {
+                        endGame();
+                    }
+                }
+            }, 5000);
+        };
+
+        const startGame = () => {
+            gameActive = true;
+            score = 0;
+            lives = 3;
+            scoreEl.textContent = '0';
+            livesEl.textContent = '💄💄💄';
+            startBtn.style.display = 'none';
+            
+            const gameInterval = setInterval(() => {
+                if (!gameActive) {
+                    clearInterval(gameInterval);
+                    return;
+                }
+                createFallingTchoin();
+                gameSpeed = Math.max(800, gameSpeed - 50); // Accélération progressive
+            }, gameSpeed);
+        };
+
+        const endGame = () => {
+            gameActive = false;
+            catchElements.forEach(el => el.remove());
+            catchElements = [];
+            
+            let message = "";
+            if (score >= 200) {
+                message = "🏆 DÉESSE DU CATCH ! Tu es une machine à attraper les tchoin ! 👑✨";
+            } else if (score >= 100) {
+                message = "💅 EXCELLENTE TCHOINEUSE ! Tes réflexes sont au top ! 🎯";
+            } else if (score >= 50) {
+                message = "✨ PAS MAL DU TOUT ! Tu commences à maîtriser l'art du catch ! 💄";
+            } else {
+                message = "😅 IL FAUT S'ENTRAÎNER ! Les tchoin sont rapides mais tu peux faire mieux ! 🦄";
+            }
+            
+            container.innerHTML += \`
+                <div class="game-over">
+                    <h3>🎯 Game Over ! 🎯</h3>
+                    <div class="final-score">Score final: \${score}</div>
+                    <div class="result-message">\${message}</div>
+                    <button onclick="app.loadTchoinCatch(document.getElementById('game-content'))" class="replay-btn">🔄 Rejouer</button>
+                </div>
+            \`;
+        };
+
+        startBtn.addEventListener('click', startGame);
+
+        // Styles CSS pour le jeu
+        const style = document.createElement('style');
+        style.textContent = \`
+            .tchoin-catch-game { text-align: center; padding: 1rem; }
+            .catch-area { 
+                position: relative; 
+                height: 400px; 
+                background: rgba(255,105,180,0.1); 
+                border: 2px dashed rgba(255,255,255,0.5); 
+                border-radius: 15px; 
+                margin: 1rem 0; 
+                overflow: hidden;
+            }
+            .game-info { display: flex; justify-content: space-between; margin: 1rem 0; }
+            .falling-tchoin { z-index: 10; animation: wiggle 0.5s infinite; }
+            .start-btn, .replay-btn { 
+                background: rgba(255,105,180,0.3); 
+                border: 2px solid rgba(255,255,255,0.5); 
+                color: white; 
+                padding: 1rem 2rem; 
+                border-radius: 25px; 
+                font-size: 1.2rem; 
+                cursor: pointer; 
+                margin: 1rem;
+            }
+            @keyframes wiggle { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(5deg); } }
+            .instructions { margin: 1rem 0; opacity: 0.8; font-size: 0.9rem; }
+            .game-over { 
+                background: rgba(255,105,180,0.2); 
+                padding: 2rem; 
+                border-radius: 15px; 
+                margin: 1rem 0; 
+            }
+        \`;
+        document.head.appendChild(style);
+    }
+
+    loadTchoinMemory(container) {
+        let cards = [];
+        let flippedCards = [];
+        let matchedPairs = 0;
+        let moves = 0;
+        let gameStarted = false;
+
+        const tchoinEmojis = ['💅', '👑', '💄', '✨', '💎', '🦄', '💋', '🎀'];
+        const gameCards = [...tchoinEmojis, ...tchoinEmojis].sort(() => Math.random() - 0.5);
+
+        container.innerHTML = \`
+            <div class="memory-game">
+                <h2>🧠💋 Memory Tchoin</h2>
+                <div class="game-stats">
+                    <div>Moves: <span id="move-counter">0</span></div>
+                    <div>Pairs: <span id="pair-counter">0</span>/8</div>
+                </div>
+                <div class="memory-grid" id="memory-grid"></div>
+                <button class="shuffle-btn" id="shuffle-btn">🔄 Nouvelle partie</button>
+            </div>
+        \`;
+
+        const grid = container.querySelector('#memory-grid');
+        const moveCounter = container.querySelector('#move-counter');
+        const pairCounter = container.querySelector('#pair-counter');
+        const shuffleBtn = container.querySelector('#shuffle-btn');
+
+        const createCards = () => {
+            grid.innerHTML = '';
+            gameCards.forEach((emoji, index) => {
+                const card = document.createElement('div');
+                card.className = 'memory-card';
+                card.dataset.emoji = emoji;
+                card.dataset.index = index;
+                
+                card.innerHTML = \`
+                    <div class="card-front">❓</div>
+                    <div class="card-back">\${emoji}</div>
+                \`;
+                
+                card.addEventListener('click', flipCard);
+                grid.appendChild(card);
+                cards.push(card);
+            });
+        };
+
+        const flipCard = (e) => {
+            const card = e.currentTarget;
+            
+            if (card.classList.contains('flipped') || card.classList.contains('matched') || flippedCards.length >= 2) {
+                return;
+            }
+
+            card.classList.add('flipped');
+            flippedCards.push(card);
+            this.playBeep(400, 100);
+
+            if (flippedCards.length === 2) {
+                moves++;
+                moveCounter.textContent = moves;
+                checkForMatch();
+            }
+        };
+
+        const checkForMatch = () => {
+            const [card1, card2] = flippedCards;
+            const emoji1 = card1.dataset.emoji;
+            const emoji2 = card2.dataset.emoji;
+
+            setTimeout(() => {
+                if (emoji1 === emoji2) {
+                    // Match !
+                    card1.classList.add('matched');
+                    card2.classList.add('matched');
+                    matchedPairs++;
+                    pairCounter.textContent = matchedPairs;
+                    this.playBeep(600, 200);
+
+                    if (matchedPairs === 8) {
+                        setTimeout(() => showResults(), 500);
+                    }
+                } else {
+                    // Pas de match
+                    card1.classList.remove('flipped');
+                    card2.classList.remove('flipped');
+                    this.playBeep(200, 200);
+                }
+                flippedCards = [];
+            }, 1000);
+        };
+
+        const showResults = () => {
+            let message = "";
+            let title = "";
+            
+            if (moves <= 12) {
+                title = "🧠👑 GÉNIE DE LA MÉMOIRE !";
+                message = "INCROYABLE ! Tu as une mémoire de tchoin légendaire ! 🏆✨";
+            } else if (moves <= 20) {
+                title = "💅 EXCELLENTE MÉMOIRE !";
+                message = "Bravo ! Ton cerveau fonctionne comme un bijou ! 💎🧠";
+            } else if (moves <= 30) {
+                title = "✨ BONNE PERFORMANCE !";
+                message = "Pas mal du tout ! Tu maîtrises l'art de la mémorisation ! 🎯";
+            } else {
+                title = "💄 À AMÉLIORER !";
+                message = "Il faut travailler cette mémoire ma belle ! Mais c'est déjà un bon début ! 😊";
+            }
+
+            container.innerHTML += \`
+                <div class="memory-results">
+                    <h3>\${title}</h3>
+                    <div class="final-stats">
+                        <div>🎯 Mouvements: \${moves}</div>
+                        <div>⭐ Performance: \${moves <= 12 ? 'Parfait' : moves <= 20 ? 'Excellent' : moves <= 30 ? 'Bien' : 'À améliorer'}</div>
+                    </div>
+                    <div class="result-message">\${message}</div>
+                    <button onclick="app.loadTchoinMemory(document.getElementById('game-content'))" class="replay-btn">🔄 Rejouer</button>
+                </div>
+            \`;
+        };
+
+        const resetGame = () => {
+            cards = [];
+            flippedCards = [];
+            matchedPairs = 0;
+            moves = 0;
+            moveCounter.textContent = '0';
+            pairCounter.textContent = '0';
+            createCards();
+        };
+
+        shuffleBtn.addEventListener('click', resetGame);
+        createCards();
+
+        // Styles CSS
+        const style = document.createElement('style');
+        style.textContent = \`
+            .memory-game { text-align: center; padding: 1rem; }
+            .memory-grid { 
+                display: grid; 
+                grid-template-columns: repeat(4, 1fr); 
+                gap: 10px; 
+                max-width: 400px; 
+                margin: 1rem auto; 
+            }
+            .memory-card { 
+                aspect-ratio: 1; 
+                background: rgba(255,105,180,0.3); 
+                border: 2px solid rgba(255,255,255,0.5); 
+                border-radius: 10px; 
+                cursor: pointer; 
+                position: relative; 
+                transform-style: preserve-3d; 
+                transition: transform 0.6s;
+            }
+            .memory-card.flipped { transform: rotateY(180deg); }
+            .memory-card.matched { 
+                background: rgba(0,255,0,0.3); 
+                transform: scale(0.9); 
+            }
+            .card-front, .card-back { 
+                position: absolute; 
+                width: 100%; 
+                height: 100%; 
+                display: flex; 
+                align-items: center; 
+                justify-content: center; 
+                font-size: 1.5rem; 
+                backface-visibility: hidden; 
+            }
+            .card-back { transform: rotateY(180deg); }
+            .game-stats { 
+                display: flex; 
+                justify-content: space-around; 
+                margin: 1rem 0; 
+                font-weight: bold; 
+            }
+            .shuffle-btn, .replay-btn { 
+                background: rgba(255,105,180,0.3); 
+                border: 2px solid rgba(255,255,255,0.5); 
+                color: white; 
+                padding: 0.8rem 1.5rem; 
+                border-radius: 20px; 
+                cursor: pointer; 
+                margin: 1rem; 
+            }
+            .memory-results { 
+                background: rgba(255,105,180,0.2); 
+                padding: 2rem; 
+                border-radius: 15px; 
+                margin: 1rem 0; 
+            }
+            @media (max-width: 480px) {
+                .memory-grid { max-width: 300px; }
+                .card-front, .card-back { font-size: 1.2rem; }
+            }
+        \`;
+        document.head.appendChild(style);
+    }
+
+    loadTchoinTap(container) {
+        let score = 0;
+        let timeLeft = 30;
+        let gameActive = false;
+        let tapInterval;
+        let countdownInterval;
+
+        container.innerHTML = \`
+            <div class="tap-game">
+                <h2>👆✨ Tap Tap Tchoin</h2>
+                <div class="tap-stats">
+                    <div class="score">Score: <span id="tap-score">0</span></div>
+                    <div class="timer">Temps: <span id="tap-timer">30</span>s</div>
+                </div>
+                <div class="tap-area" id="tap-area">
+                    <div class="tap-target" id="tap-target">💅</div>
+                </div>
+                <button class="start-tap-btn" id="start-tap">🚀 Start Tapping !</button>
+                <div class="tap-instructions">👆 Tape le plus vite possible sur l'emoji ! Plus tu tapes vite, plus tu gagnes de points ! 💅⚡</div>
+            </div>
+        \`;
+
+        const scoreEl = container.querySelector('#tap-score');
+        const timerEl = container.querySelector('#tap-timer');
+        const tapTarget = container.querySelector('#tap-target');
+        const tapArea = container.querySelector('#tap-area');
+        const startBtn = container.querySelector('#start-tap');
+
+        const tchoinEmojis = ['💅', '👑', '💄', '✨', '💎', '🦄', '💋', '🎀', '👩‍🦳', '💖'];
+        let tapCount = 0;
+        let lastTapTime = 0;
+
+        const changeEmoji = () => {
+            tapTarget.textContent = tchoinEmojis[Math.floor(Math.random() * tchoinEmojis.length)];
+        };
+
+        const onTap = () => {
+            if (!gameActive) return;
+            
+            tapCount++;
+            const currentTime = Date.now();
+            const timeDiff = currentTime - lastTapTime;
+            
+            // Bonus pour vitesse
+            let points = 1;
+            if (timeDiff < 200) points = 3; // Très rapide
+            else if (timeDiff < 400) points = 2; // Rapide
+            
+            score += points;
+            scoreEl.textContent = score;
+            lastTapTime = currentTime;
+            
+            // Effets visuels
+            this.playBeep(400 + Math.random() * 400, 50);
+            tapTarget.style.transform = 'scale(1.3) rotate(15deg)';
+            tapTarget.style.background = \`hsl(\${Math.random() * 360}, 70%, 70%)\`;
+            
+            setTimeout(() => {
+                tapTarget.style.transform = 'scale(1) rotate(0deg)';
+                tapTarget.style.background = 'transparent';
+            }, 100);
+            
+            changeEmoji();
+            
+            // Animation de score
+            const scorePopup = document.createElement('div');
+            scorePopup.textContent = \`+\${points}\`;
+            scorePopup.style.cssText = \`
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                color: #fff;
+                font-size: 1.5rem;
+                font-weight: bold;
+                pointer-events: none;
+                animation: scoreFloat 1s ease-out forwards;
+            \`;
+            tapArea.appendChild(scorePopup);
+            setTimeout(() => scorePopup.remove(), 1000);
+        };
+
+        const startGame = () => {
+            gameActive = true;
+            score = 0;
+            timeLeft = 30;
+            tapCount = 0;
+            lastTapTime = Date.now();
+            scoreEl.textContent = '0';
+            startBtn.style.display = 'none';
+            
+            countdownInterval = setInterval(() => {
+                timeLeft--;
+                timerEl.textContent = timeLeft;
+                
+                if (timeLeft <= 0) {
+                    endGame();
+                }
+            }, 1000);
+            
+            // Changer d'emoji périodiquement
+            tapInterval = setInterval(changeEmoji, 1000);
+        };
+
+        const endGame = () => {
+            gameActive = false;
+            clearInterval(countdownInterval);
+            clearInterval(tapInterval);
+            
+            const tps = (tapCount / 30).toFixed(1); // Taps per second
+            
+            let message = "";
+            let title = "";
+            
+            if (score >= 200) {
+                title = "👑 DÉESSE DU TAP !";
+                message = \`INCROYABLE ! \${tps} taps/sec ! Tes doigts sont des missiles ! 🚀💅\`;
+            } else if (score >= 150) {
+                title = "⚡ SPEED DEMON !";
+                message = \`EXCELLENT ! \${tps} taps/sec ! Tu as des doigts magiques ! ✨👆\`;
+            } else if (score >= 100) {
+                title = "💄 BONNE VITESSE !";
+                message = \`Pas mal ! \${tps} taps/sec ! Tu commences à maîtriser ! 🎯\`;
+            } else if (score >= 50) {
+                title = "🦄 DÉBUTANTE PROMETTEUSE !";
+                message = \`C'est un début ! \${tps} taps/sec ! Il faut s'entraîner ! 💪\`;
+            } else {
+                title = "😅 SLOW MOTION !";
+                message = \`\${tps} taps/sec... Es-tu sûre que tes doigts fonctionnent ? 😂💅\`;
+            }
+
+            container.innerHTML += \`
+                <div class="tap-results">
+                    <h3>\${title}</h3>
+                    <div class="final-stats">
+                        <div>🎯 Score: \${score} points</div>
+                        <div>👆 Taps: \${tapCount}</div>
+                        <div>⚡ Vitesse: \${tps} taps/sec</div>
+                    </div>
+                    <div class="result-message">\${message}</div>
+                    <button onclick="app.loadTchoinTap(document.getElementById('game-content'))" class="replay-btn">🔄 Rejouer</button>
+                </div>
+            \`;
+        };
+
+        tapTarget.addEventListener('click', onTap);
+        tapTarget.addEventListener('touchstart', onTap);
+        startBtn.addEventListener('click', startGame);
+
+        // Styles CSS
+        const style = document.createElement('style');
+        style.textContent = \`
+            .tap-game { text-align: center; padding: 1rem; }
+            .tap-area { 
+                position: relative;
+                height: 300px; 
+                display: flex; 
+                align-items: center; 
+                justify-content: center; 
+                margin: 2rem auto; 
+                background: rgba(255,105,180,0.1); 
+                border: 3px dashed rgba(255,255,255,0.5); 
+                border-radius: 20px;
+                max-width: 400px;
+            }
+            .tap-target { 
+                font-size: 4rem; 
+                cursor: pointer; 
+                user-select: none; 
+                transition: transform 0.1s, background 0.1s;
+                padding: 1rem;
+                border-radius: 50%;
+                background: transparent;
+            }
+            .tap-target:hover { transform: scale(1.1); }
+            .tap-stats { 
+                display: flex; 
+                justify-content: space-around; 
+                margin: 1rem 0; 
+                font-weight: bold; 
+                font-size: 1.2rem;
+            }
+            .start-tap-btn, .replay-btn { 
+                background: rgba(255,105,180,0.3); 
+                border: 2px solid rgba(255,255,255,0.5); 
+                color: white; 
+                padding: 1rem 2rem; 
+                border-radius: 25px; 
+                font-size: 1.2rem; 
+                cursor: pointer; 
+                margin: 1rem;
+            }
+            .tap-instructions { 
+                margin: 1rem 0; 
+                opacity: 0.8; 
+                font-size: 0.9rem; 
+                max-width: 400px;
+                margin-left: auto;
+                margin-right: auto;
+            }
+            .tap-results { 
+                background: rgba(255,105,180,0.2); 
+                padding: 2rem; 
+                border-radius: 15px; 
+                margin: 1rem 0; 
+            }
+            @keyframes scoreFloat { 
+                0% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+                100% { opacity: 0; transform: translate(-50%, -100%) scale(1.5); }
+            }
+        \`;
+        document.head.appendChild(style);
+    }
+
+    loadTchoinSlide(container) {
+        let puzzle = [];
+        let moves = 0;
+        let isWin = false;
+        const size = 3; // 3x3 puzzle
+
+        // Image puzzle en emojis tchoin
+        const originalPuzzle = [
+            ['💅', '👑', '💄'],
+            ['✨', '💎', '🦄'],
+            ['💋', '🎀', '']
+        ];
+
+        container.innerHTML = \`
+            <div class="slide-game">
+                <h2>🔄💎 Slide Puzzle Tchoin</h2>
+                <div class="puzzle-info">
+                    <div>Moves: <span id="slide-moves">0</span></div>
+                    <div class="puzzle-preview">
+                        <div class="preview-grid">
+                            <div>💅</div><div>👑</div><div>💄</div>
+                            <div>✨</div><div>💎</div><div>🦄</div>
+                            <div>💋</div><div>🎀</div><div class="empty">🎯</div>
+                        </div>
+                        <div class="preview-label">Objectif</div>
+                    </div>
+                </div>
+                <div class="puzzle-grid" id="puzzle-grid"></div>
+                <div class="slide-controls">
+                    <button class="shuffle-btn" id="slide-shuffle">🔀 Mélanger</button>
+                    <button class="solve-btn" id="slide-solve">💡 Indice</button>
+                </div>
+                <div class="slide-instructions">👆 Tape sur une case adjacente à l'espace vide pour la faire glisser ! 🔄</div>
+            </div>
+        \`;
+
+        const gridEl = container.querySelector('#puzzle-grid');
+        const movesEl = container.querySelector('#slide-moves');
+        const shuffleBtn = container.querySelector('#slide-shuffle');
+        const solveBtn = container.querySelector('#slide-solve');
+
+        // Initialiser le puzzle
+        const initPuzzle = () => {
+            puzzle = JSON.parse(JSON.stringify(originalPuzzle));
+            renderPuzzle();
+        };
+
+        // Render le puzzle
+        const renderPuzzle = () => {
+            gridEl.innerHTML = '';
+            puzzle.forEach((row, i) => {
+                row.forEach((cell, j) => {
+                    const cellEl = document.createElement('div');
+                    cellEl.className = cell === '' ? 'puzzle-cell empty' : 'puzzle-cell filled';
+                    cellEl.textContent = cell;
+                    cellEl.dataset.row = i;
+                    cellEl.dataset.col = j;
+                    
+                    if (cell !== '') {
+                        cellEl.addEventListener('click', () => moveCell(i, j));
+                    }
+                    
+                    gridEl.appendChild(cellEl);
+                });
+            });
+        };
+
+        // Trouver la case vide
+        const findEmpty = () => {
+            for (let i = 0; i < size; i++) {
+                for (let j = 0; j < size; j++) {
+                    if (puzzle[i][j] === '') {
+                        return [i, j];
+                    }
+                }
+            }
+        };
+
+        // Vérifier si le mouvement est valide
+        const isValidMove = (row, col) => {
+            const [emptyRow, emptyCol] = findEmpty();
+            return (Math.abs(row - emptyRow) === 1 && col === emptyCol) ||
+                   (Math.abs(col - emptyCol) === 1 && row === emptyRow);
+        };
+
+        // Déplacer une case
+        const moveCell = (row, col) => {
+            if (!isValidMove(row, col) || isWin) return;
+
+            const [emptyRow, emptyCol] = findEmpty();
+            
+            // Échanger les cases
+            puzzle[emptyRow][emptyCol] = puzzle[row][col];
+            puzzle[row][col] = '';
+            
+            moves++;
+            movesEl.textContent = moves;
+            this.playBeep(400, 100);
+            
+            renderPuzzle();
+            checkWin();
+        };
+
+        // Vérifier la victoire
+        const checkWin = () => {
+            let isComplete = true;
+            puzzle.forEach((row, i) => {
+                row.forEach((cell, j) => {
+                    if (originalPuzzle[i][j] !== cell) {
+                        isComplete = false;
+                    }
+                });
+            });
+            
+            if (isComplete && !isWin) {
+                isWin = true;
+                setTimeout(() => showWin(), 500);
+            }
+        };
+
+        // Afficher la victoire
+        const showWin = () => {
+            this.playBeep(600, 500);
+            
+            let message = "";
+            let title = "";
+            
+            if (moves <= 20) {
+                title = "🧠👑 GÉNIE DU PUZZLE !";
+                message = \`INCROYABLE ! Tu as résolu le puzzle en seulement \${moves} mouvements ! 🏆✨\`;
+            } else if (moves <= 50) {
+                title = "💅 EXCELLENTE LOGIQUE !";
+                message = \`Bravo ! \${moves} mouvements, tu maîtrises l'art du puzzle ! 🎯💎\`;
+            } else if (moves <= 100) {
+                title = "✨ BONNE PERSÉVÉRANCE !";
+                message = \`Bien joué ! \${moves} mouvements, tu as trouvé la solution ! 🦄\`;
+            } else {
+                title = "💄 MISSION ACCOMPLIE !";
+                message = \`\${moves} mouvements ! L'important c'est d'arriver au bout ! 💪😊\`;
+            }
+
+            container.innerHTML += \`
+                <div class="slide-win">
+                    <h3>\${title}</h3>
+                    <div class="win-animation">🎉✨🏆✨🎉</div>
+                    <div class="final-moves">Résolu en \${moves} mouvements !</div>
+                    <div class="win-message">\${message}</div>
+                    <button onclick="app.loadTchoinSlide(document.getElementById('game-content'))" class="replay-btn">🔄 Nouveau puzzle</button>
+                </div>
+            \`;
+        };
+
+        // Mélanger le puzzle
+        const shufflePuzzle = () => {
+            moves = 0;
+            isWin = false;
+            movesEl.textContent = '0';
+            
+            // Effectuer des mouvements aléatoires valides
+            for (let i = 0; i < 200; i++) {
+                const [emptyRow, emptyCol] = findEmpty();
+                const validMoves = [];
+                
+                // Trouver tous les mouvements valides
+                for (let r = 0; r < size; r++) {
+                    for (let c = 0; c < size; c++) {
+                        if (isValidMove(r, c)) {
+                            validMoves.push([r, c]);
+                        }
+                    }
+                }
+                
+                if (validMoves.length > 0) {
+                    const [moveRow, moveCol] = validMoves[Math.floor(Math.random() * validMoves.length)];
+                    puzzle[emptyRow][emptyCol] = puzzle[moveRow][moveCol];
+                    puzzle[moveRow][moveCol] = '';
+                }
+            }
+            
+            moves = 0;
+            movesEl.textContent = '0';
+            renderPuzzle();
+        };
+
+        // Donner un indice
+        const giveHint = () => {
+            const hints = [
+                "💡 Essaie de placer les coins en premier !",
+                "💡 Les bords sont plus faciles à positionner !",
+                "💡 Commence par le coin supérieur gauche !",
+                "💡 Travaille ligne par ligne !",
+                "💡 Pense plusieurs mouvements à l'avance !",
+                "💡 L'espace vide doit finir en bas à droite !",
+                "💡 Concentre-toi sur une zone à la fois !"
+            ];
+            
+            const randomHint = hints[Math.floor(Math.random() * hints.length)];
+            
+            const hintDiv = document.createElement('div');
+            hintDiv.className = 'hint-popup';
+            hintDiv.textContent = randomHint;
+            hintDiv.style.cssText = \`
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: rgba(255,105,180,0.9);
+                color: white;
+                padding: 1rem 2rem;
+                border-radius: 15px;
+                font-size: 1.1rem;
+                z-index: 1000;
+                animation: hintFade 3s ease-out forwards;
+            \`;
+            
+            document.body.appendChild(hintDiv);
+            setTimeout(() => hintDiv.remove(), 3000);
+            
+            this.playBeep(500, 200);
+        };
+
+        shuffleBtn.addEventListener('click', shufflePuzzle);
+        solveBtn.addEventListener('click', giveHint);
+
+        initPuzzle();
+        shufflePuzzle(); // Commencer avec un puzzle mélangé
+
+        // Styles CSS
+        const style = document.createElement('style');
+        style.textContent = \`
+            .slide-game { text-align: center; padding: 1rem; }
+            .puzzle-info { 
+                display: flex; 
+                justify-content: space-between; 
+                align-items: center; 
+                margin: 1rem 0; 
+                flex-wrap: wrap;
+            }
+            .puzzle-preview { font-size: 0.7rem; }
+            .preview-grid { 
+                display: grid; 
+                grid-template-columns: repeat(3, 1fr); 
+                gap: 1px; 
+                width: 60px; 
+                margin: 0 auto;
+            }
+            .preview-grid div { 
+                aspect-ratio: 1; 
+                display: flex; 
+                align-items: center; 
+                justify-content: center; 
+                background: rgba(255,255,255,0.1);
+                font-size: 0.8rem;
+            }
+            .preview-grid .empty { background: rgba(255,105,180,0.3); }
+            .preview-label { font-size: 0.7rem; margin-top: 0.5rem; opacity: 0.8; }
+            .puzzle-grid { 
+                display: grid; 
+                grid-template-columns: repeat(3, 1fr); 
+                gap: 5px; 
+                max-width: 300px; 
+                margin: 2rem auto; 
+                aspect-ratio: 1;
+            }
+            .puzzle-cell { 
+                aspect-ratio: 1; 
+                display: flex; 
+                align-items: center; 
+                justify-content: center; 
+                font-size: 2rem; 
+                border-radius: 10px; 
+                transition: all 0.2s;
+            }
+            .puzzle-cell.filled { 
+                background: rgba(255,105,180,0.3); 
+                border: 2px solid rgba(255,255,255,0.5); 
+                cursor: pointer; 
+            }
+            .puzzle-cell.filled:hover { 
+                background: rgba(255,105,180,0.5); 
+                transform: scale(0.95);
+            }
+            .puzzle-cell.empty { 
+                background: rgba(255,105,180,0.1); 
+                border: 2px dashed rgba(255,255,255,0.3); 
+            }
+            .slide-controls { margin: 1rem 0; }
+            .shuffle-btn, .solve-btn, .replay-btn { 
+                background: rgba(255,105,180,0.3); 
+                border: 2px solid rgba(255,255,255,0.5); 
+                color: white; 
+                padding: 0.8rem 1.5rem; 
+                border-radius: 20px; 
+                cursor: pointer; 
+                margin: 0.5rem; 
+            }
+            .slide-instructions { 
+                margin: 1rem 0; 
+                opacity: 0.8; 
+                font-size: 0.9rem; 
+                max-width: 400px;
+                margin-left: auto;
+                margin-right: auto;
+            }
+            .slide-win { 
+                background: rgba(255,105,180,0.2); 
+                padding: 2rem; 
+                border-radius: 15px; 
+                margin: 1rem 0; 
+            }
+            .win-animation { 
+                font-size: 2rem; 
+                margin: 1rem 0; 
+                animation: bounce 1s infinite;
+            }
+            @keyframes hintFade { 
+                0% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+                20% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+                80% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+                100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+            }
+            @media (max-width: 480px) {
+                .puzzle-grid { max-width: 250px; }
+                .puzzle-cell { font-size: 1.5rem; }
+                .puzzle-info { flex-direction: column; gap: 1rem; }
+            }
+        \`;
+        document.head.appendChild(style);
     }
 }
 
