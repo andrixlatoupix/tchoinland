@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tchoiland-v1';
+const CACHE_NAME = 'tchoinland-v1';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -63,4 +63,4 @@ self.addEventListener('sync', event => {
   }
 });
 
-console.log('🦄 Service Worker Tchoiland.io chargé ! 💅');
+console.log('🦄 Service Worker Tchoinland.fun chargé ! 💅');

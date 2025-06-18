@@ -263,8 +263,26 @@ body {
     opacity: 0.8;
 }
 
-/* Responsive Design */
+/* Responsive Design AMÉLIORÉ */
 @media (max-width: 768px) {
+    body {
+        /* S'assurer que le background fonctionne sur mobile */
+        background: linear-gradient(45deg, #ff69b4, #ff1493, #da70d6, #ba55d3, #9370db);
+        background-size: 400% 400%;
+        animation: gradient-shift 8s ease infinite;
+        background-attachment: scroll; /* Important pour mobile */
+        min-height: 100vh;
+    }
+    
+    .sparkle-bg {
+        /* S'assurer que les paillettes fonctionnent sur mobile */
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+    }
+    
     .game-grid {
         grid-template-columns: 1fr;
         gap: 1.5rem;
@@ -277,35 +295,95 @@ body {
     
     .logo-container {
         padding: 1.5rem;
+        margin: 0 1rem;
+    }
+    
+    .logo {
+        font-size: clamp(1.5rem, 6vw, 3rem);
+    }
+    
+    .slogan {
+        font-size: clamp(0.9rem, 3vw, 1.2rem);
     }
     
     .music-toggle {
         width: 50px;
         height: 50px;
         font-size: 1.2rem;
+        top: 0.5rem;
+        right: 0.5rem;
     }
     
     .game-card {
         padding: 1.5rem;
+        margin: 0 0.5rem;
     }
     
     .card-icon {
         font-size: 2.5rem;
     }
+    
+    .game-card h3 {
+        font-size: 1.3rem;
+    }
+    
+    .game-card p {
+        font-size: 0.9rem;
+    }
 }
 
 @media (max-width: 480px) {
+    body {
+        /* Extra fixes pour très petits écrans */
+        background-attachment: scroll;
+        overflow-x: hidden;
+    }
+    
     .game-screen {
-        padding: 1rem;
+        padding: 0.5rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
     }
     
     #game-content {
-        padding: 1.5rem;
+        padding: 1rem;
+        margin: 0.5rem;
+        min-height: 60vh;
     }
     
     .back-btn {
         padding: 0.6rem 1.2rem;
         font-size: 0.9rem;
+        margin: 0.5rem;
+    }
+    
+    .logo-container {
+        padding: 1rem;
+    }
+    
+    .game-card {
+        padding: 1rem;
+        margin: 0;
+    }
+    
+    .footer {
+        padding: 1rem;
+        font-size: 0.8rem;
+    }
+}
+
+/* Mobile landscape fixes */
+@media (max-width: 768px) and (orientation: landscape) {
+    .header {
+        padding: 0.5rem 1rem;
+    }
+    
+    .logo {
+        font-size: 2rem;
+    }
+    
+    .logo-container {
+        padding: 1rem;
     }
 }
 

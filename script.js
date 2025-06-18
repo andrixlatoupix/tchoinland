@@ -1,4 +1,4 @@
-class TchoilandApp {
+class TchoinlandApp {
     constructor() {
         this.currentGame = null;
         // Récupérer la préférence de musique sauvegardée (par défaut activée pour les vraies tchoin ! 💅)
@@ -11,7 +11,7 @@ class TchoilandApp {
         this.setupMusic();
         this.addRandomSparkles();
         this.updateMusicButton();
-        console.log('🦄 Bienvenue dans Tchoiland.io ! 💅');
+        console.log('🦄 Bienvenue dans Tchoinland.fun ! 💅');
     }
 
     setupEventListeners() {
@@ -593,7 +593,7 @@ class TchoilandApp {
                     <div class="bonus-message">${randomBonus}</div>
                     <div class="actions">
                         <button class="restart-btn" onclick="app.loadQuizzGame(document.getElementById('game-content'))">🔄 Re-tenter ma chance</button>
-                        <button class="share-result-btn" onclick="navigator.share && navigator.share({title: 'Mon score Tchoin Quiz', text: '${title} - ${percentage}% au Tchoin Quiz sur Tchoiland.io ! 💅✨', url: window.location.href})">📱 Flex sur les réseaux</button>
+                        <button class="share-result-btn" onclick="navigator.share && navigator.share({title: 'Mon score Tchoin Quiz', text: '${title} - ${percentage}% au Tchoin Quiz sur Tchoinland.fun ! 💅✨', url: window.location.href})">📱 Flex sur les réseaux</button>
                     </div>
                 </div>
             `;
@@ -826,11 +826,11 @@ Maintenant, sois TchoinGPT dans toute ta splendeur intelligente et délirante ! 
             if (navigator.share) {
                 navigator.share({
                     title: 'Conversation avec TchoinGPT',
-                    text: conversation + '\n\n- Conversation avec TchoinGPT sur Tchoiland.io ✨',
+                    text: conversation + '\n\n- Conversation avec TchoinGPT sur Tchoinland.fun ✨',
                     url: window.location.href
                 });
             } else {
-                navigator.clipboard.writeText(conversation + '\n\n- TchoinGPT sur Tchoiland.io ✨').then(() => {
+                navigator.clipboard.writeText(conversation + '\n\n- TchoinGPT sur Tchoinland.fun ✨').then(() => {
                     alert('📋 Conversation copiée ! Partage cette sagesse ! 💅');
                 });
             }
@@ -1537,11 +1537,11 @@ Maintenant, sois TchoinGPT dans toute ta splendeur intelligente et délirante ! 
             if (navigator.share) {
                 navigator.share({
                     title: 'Tchoin Fact™',
-                    text: currentFact + ' - Source: Tchoiland.io',
+                    text: currentFact + ' - Source: Tchoinland.fun',
                     url: window.location.href
                 });
             } else {
-                navigator.clipboard.writeText(currentFact + ' - Source: Tchoiland.io').then(() => {
+                navigator.clipboard.writeText(currentFact + ' - Source: Tchoinland.fun').then(() => {
                     alert('📋 Fact copié ! Diffuse cette science ! 🧬');
                 });
             }
@@ -1743,7 +1743,7 @@ Maintenant, sois TchoinGPT dans toute ta splendeur intelligente et délirante ! 
                         <button class="restart-btn" onclick="app.loadTchoinmeni(document.getElementById('game-content'))">
                             🔄 Nouvelle Carrière
                         </button>
-                        <button class="restart-btn" onclick="navigator.share && navigator.share({title: 'Mon score Aurélien Tchoinméni', text: '${title} Score: ${totalScore}/25 sur Tchoiland.io !', url: window.location.href})">
+                        <button class="restart-btn" onclick="navigator.share && navigator.share({title: 'Mon score Aurélien Tchoinméni', text: '${title} Score: ${totalScore}/25 sur Tchoinland.fun !', url: window.location.href})">
                             📱 Partager mon Score
                         </button>
                     </div>
@@ -1996,7 +1996,7 @@ Maintenant, sois TchoinGPT dans toute ta splendeur intelligente et délirante ! 
                     
                     <div class="actions">
                         <button class="restart-btn" onclick="app.loadTinderTchoin(document.getElementById('game-content'))">🔄 Re-swiper</button>
-                        <button class="share-result-btn" onclick="navigator.share && navigator.share({title: 'Mes matches Tinder Tchoin', text: '${title} - ${matches.length} matches sur Tchoiland.io ! 💖', url: window.location.href})">📱 Flex mes matches</button>
+                        <button class="share-result-btn" onclick="navigator.share && navigator.share({title: 'Mes matches Tinder Tchoin', text: '${title} - ${matches.length} matches sur Tchoinland.fun ! 💖', url: window.location.href})">📱 Flex mes matches</button>
                     </div>
                 </div>
             `;
@@ -2276,7 +2276,7 @@ document.head.appendChild(style);
 
 // Initialize the app when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    window.app = new TchoilandApp();
+    window.app = new TchoinlandApp();
 });
 
 // PWA service worker registration
