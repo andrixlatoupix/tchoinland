@@ -327,23 +327,27 @@ body {
     .game-card {
         padding: 1.5rem;
         margin: 0 0.5rem;
-        /* Couleurs similaires à la version desktop mais forcées pour mobile */
-        background: rgba(255, 255, 255, 0.2) !important;
-        border: 2px solid rgba(255, 255, 255, 0.3) !important;
+        /* FORCER BRUTALEMENT LES COULEURS POUR MOBILE */
+        background: linear-gradient(135deg, rgba(255, 105, 180, 0.4), rgba(218, 112, 214, 0.4)) !important;
+        background-color: rgba(255, 105, 180, 0.4) !important;
+        border: 3px solid rgba(255, 255, 255, 0.6) !important;
         backdrop-filter: none !important;
-        /* Fallback avec une teinte légèrement colorée pour éviter le blanc pur */
-        background-color: rgba(255, 255, 255, 0.15) !important;
-        /* Ajouter une ombre subtile pour la profondeur */
-        box-shadow: 0 8px 32px rgba(31, 38, 135, 0.2) !important;
+        -webkit-backdrop-filter: none !important;
+        /* Multiples fallbacks */
+        background-image: linear-gradient(135deg, rgba(255, 105, 180, 0.4), rgba(218, 112, 214, 0.4)) !important;
+        box-shadow: 0 8px 32px rgba(255, 105, 180, 0.3) !important;
     }
     
     .game-card:hover,
     .game-card:active,
-    .game-card:focus {
-        background: rgba(255, 255, 255, 0.3) !important;
-        background-color: rgba(255, 255, 255, 0.25) !important;
-        box-shadow: 0 15px 35px rgba(255, 105, 180, 0.3) !important;
-        transform: translateY(-5px) !important;
+    .game-card:focus,
+    .game-card:target {
+        background: linear-gradient(135deg, rgba(255, 105, 180, 0.6), rgba(218, 112, 214, 0.6)) !important;
+        background-color: rgba(255, 105, 180, 0.6) !important;
+        background-image: linear-gradient(135deg, rgba(255, 105, 180, 0.6), rgba(218, 112, 214, 0.6)) !important;
+        box-shadow: 0 15px 35px rgba(255, 105, 180, 0.5) !important;
+        transform: translateY(-5px) scale(1.02) !important;
+        border: 3px solid rgba(255, 255, 255, 0.8) !important;
     }
     
     .card-icon {
@@ -408,21 +412,26 @@ body {
     .game-card {
         padding: 1rem;
         margin: 0;
-        /* Couleurs cohérentes avec desktop sur très petits écrans */
-        background: rgba(255, 255, 255, 0.2) !important;
-        border: 2px solid rgba(255, 255, 255, 0.3) !important;
+        /* FORCER ENCORE PLUS BRUTALEMENT POUR TRÈS PETITS ÉCRANS */
+        background: linear-gradient(135deg, rgba(255, 105, 180, 0.4), rgba(218, 112, 214, 0.4)) !important;
+        background-color: rgba(255, 105, 180, 0.4) !important;
+        border: 3px solid rgba(255, 255, 255, 0.6) !important;
         backdrop-filter: none !important;
-        background-color: rgba(255, 255, 255, 0.15) !important;
-        box-shadow: 0 8px 32px rgba(31, 38, 135, 0.2) !important;
+        -webkit-backdrop-filter: none !important;
+        background-image: linear-gradient(135deg, rgba(255, 105, 180, 0.4), rgba(218, 112, 214, 0.4)) !important;
+        box-shadow: 0 8px 32px rgba(255, 105, 180, 0.3) !important;
     }
     
     .game-card:hover,
     .game-card:active,
-    .game-card:focus {
-        background: rgba(255, 255, 255, 0.3) !important;
-        background-color: rgba(255, 255, 255, 0.25) !important;
-        box-shadow: 0 15px 35px rgba(255, 105, 180, 0.3) !important;
-        transform: translateY(-5px) !important;
+    .game-card:focus,
+    .game-card:target {
+        background: linear-gradient(135deg, rgba(255, 105, 180, 0.6), rgba(218, 112, 214, 0.6)) !important;
+        background-color: rgba(255, 105, 180, 0.6) !important;
+        background-image: linear-gradient(135deg, rgba(255, 105, 180, 0.6), rgba(218, 112, 214, 0.6)) !important;
+        box-shadow: 0 15px 35px rgba(255, 105, 180, 0.5) !important;
+        transform: translateY(-5px) scale(1.02) !important;
+        border: 3px solid rgba(255, 255, 255, 0.8) !important;
     }
     
     .game-card h3 {
