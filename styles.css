@@ -327,6 +327,15 @@ body {
     .game-card {
         padding: 1.5rem;
         margin: 0 0.5rem;
+        /* S'assurer que les couleurs sont identiques sur mobile */
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(15px);
+        border: 2px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .game-card:hover {
+        background: rgba(255, 255, 255, 0.25);
+        box-shadow: 0 20px 40px rgba(255, 105, 180, 0.3);
     }
     
     .card-icon {
@@ -335,10 +344,14 @@ body {
     
     .game-card h3 {
         font-size: 1.3rem;
+        color: #fff;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
     }
     
     .game-card p {
         font-size: 0.9rem;
+        color: #fff;
+        opacity: 0.9;
     }
 }
 
@@ -387,6 +400,25 @@ body {
     .game-card {
         padding: 1rem;
         margin: 0;
+        /* S'assurer que les couleurs sont identiques sur très petits écrans */
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(15px);
+        border: 2px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .game-card:hover {
+        background: rgba(255, 255, 255, 0.25);
+        box-shadow: 0 20px 40px rgba(255, 105, 180, 0.3);
+    }
+    
+    .game-card h3 {
+        color: #fff;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    }
+    
+    .game-card p {
+        color: #fff;
+        opacity: 0.9;
     }
     
     .footer {
