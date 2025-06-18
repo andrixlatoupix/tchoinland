@@ -3,7 +3,6 @@ class TchoinlandApp {
         this.currentGame = null;
         // Récupérer la préférence de musique sauvegardée (par défaut activée pour les vraies tchoin ! 💅)
         this.musicEnabled = localStorage.getItem('tchoinMusicEnabled') !== 'false';
-        this.audioRetryCount = 0;
         this.init();
     }
 
@@ -12,7 +11,6 @@ class TchoinlandApp {
         this.setupMusic();
         this.addRandomSparkles();
         this.updateMusicButton();
-        this.setupRandomPhotos();
         console.log('🦄 Bienvenue dans Tchoinland.fun ! 💅');
     }
 
@@ -114,14 +112,8 @@ class TchoinlandApp {
         if (this.musicEnabled && this.musicLoaded) {
             this.startRandomSong();
         } else if (this.musicEnabled && !this.musicLoaded) {
-            // Si la musique n'est pas encore chargée, attendre une seule fois
-            if (!this.audioRetryCount) {
-                this.audioRetryCount = 0;
-            }
-            if (this.audioRetryCount < 3) {
-                this.audioRetryCount++;
-                setTimeout(() => this.tryAutoPlay(), 2000);
-            }
+            // Si la musique n'est pas encore chargée, attendre
+            setTimeout(() => this.tryAutoPlay(), 1000);
         }
     }
 
@@ -147,13 +139,8 @@ class TchoinlandApp {
     }
     
     playNextSong() {
-        // Choisir une chanson différente de la précédente
-        let newIndex;
-        do {
-            newIndex = Math.floor(Math.random() * this.tchoinPlaylist.length);
-        } while (newIndex === this.currentSongIndex && this.tchoinPlaylist.length > 1);
-        
-        this.currentSongIndex = newIndex;
+        // Passer à la chanson suivante dans la playlist
+        this.currentSongIndex = (this.currentSongIndex + 1) % this.tchoinPlaylist.length;
         const nextSong = this.tchoinPlaylist[this.currentSongIndex];
         console.log('🎵⏭️ Chanson suivante:', nextSong);
         
@@ -423,9 +410,6 @@ class TchoinlandApp {
                 break;
             case 'tchoin-slide':
                 this.loadTchoinSlide(content);
-                break;
-            case 'tchoin-snake':
-                this.loadTchoinSnake(content);
                 break;
         }
     }
@@ -917,26 +901,14 @@ Maintenant, sois TchoinGPT dans toute ta splendeur intelligente et délirante ! 
 
     loadTchoinOrNot(container) {
         const items = [
-            { image: "👸", name: "Kim Kardashian vibes", isTchoin: true, reason: "L'icône du glamour assumé, la reine des tchoin !" },
-            { image: "🤴", name: "Brad Pitt énergie", isTchoin: false, reason: "Trop classe et discret pour être tchoin." },
-            { image: "👩‍🎤", name: "Ariana Grande mood", isTchoin: true, reason: "Queue de cheval haute et attitude de diva, 100% tchoin !" },
-            { image: "👨‍💼", name: "Elon Musk énergie", isTchoin: false, reason: "Trop occupé à conquérir Mars pour être tchoin." },
-            { image: "🦄", name: "Paris Hilton vibes", isTchoin: true, reason: "L'inventrice du style tchoin moderne !" },
-            { image: "🕺", name: "Ryan Gosling énergie", isTchoin: false, reason: "Trop mystérieux et talent pur pour être tchoin." },
-            { image: "💃", name: "Cardi B attitude", isTchoin: true, reason: "Ongles XXL et personnalité explosive, tchoin confirmée !" },
-            { image: "🧔", name: "Keanu Reeves vibes", isTchoin: false, reason: "Trop humble et authentique pour être tchoin." },
-            { image: "👑", name: "Beyoncé énergie", isTchoin: true, reason: "Queen B, littéralement une reine tchoin !" },
-            { image: "🤵", name: "Leonardo DiCaprio mood", isTchoin: false, reason: "Trop écolo et intellectuel pour être tchoin." },
-            { image: "💋", name: "Kylie Jenner vibes", isTchoin: true, reason: "Lèvres XXL et business empire, tchoin businesswoman !" },
-            { image: "👨‍🎨", name: "Ryan Reynolds énergie", isTchoin: false, reason: "Trop sarcastique et down-to-earth." },
-            { image: "🌟", name: "Lady Gaga attitude", isTchoin: true, reason: "Extravagance et paillettes, l'art tchoin poussé à l'extrême !" },
-            { image: "🎭", name: "Robert Downey Jr vibes", isTchoin: false, reason: "Trop charismatique naturellement pour être tchoin." },
-            { image: "👄", name: "Nicki Minaj énergie", isTchoin: true, reason: "Couleurs flashy et attitude boss, tchoin de compétition !" },
-            { image: "🕴️", name: "Tom Hanks mood", isTchoin: false, reason: "Trop gentil et authentique pour être tchoin." },
-            { image: "💎", name: "Rihanna vibes", isTchoin: true, reason: "Businesswoman et style iconique, tchoin successful !" },
-            { image: "🎬", name: "Morgan Freeman énergie", isTchoin: false, reason: "Trop sage et respecté pour être tchoin." },
-            { image: "✨", name: "Selena Gomez attitude", isTchoin: true, reason: "Sweet mais avec du caractère, tchoin refined !" },
-            { image: "🎪", name: "Jim Carrey vibes", isTchoin: false, reason: "Trop drôle naturellement pour être tchoin." }
+            { image: "🥧", name: "Une part de quiche lorraine", isTchoin: true, reason: "C'est du fromage qui se la pète, forcément tchoin !" },
+            { image: "🐦", name: "Un pigeon avec une chaîne en or", isTchoin: true, reason: "Le drip du pigeon dépasse l'entendement, respect." },
+            { image: "👨‍🔬", name: "Albert Einstein", isTchoin: false, reason: "Trop intelligent pour être une tchoin, désolé Albert." },
+            { image: "🍠", name: "Une patate douce", isTchoin: false, reason: "On hésite... mais non, elle est trop healthy." },
+            { image: "🦄", name: "Une licorne en paillettes", isTchoin: true, reason: "C'est littéralement l'animal emblématique des tchoin !" },
+            { image: "🍕", name: "Une pizza hawaïenne", isTchoin: true, reason: "Controversée et assumée, comme une vraie tchoin." },
+            { image: "📚", name: "Un manuel de physique quantique", isTchoin: false, reason: "Trop sérieux, une tchoin préfère les magazines." },
+            { image: "💄", name: "Un rouge à lèvres Chanel", isTchoin: true, reason: "Du luxe qui se voit, l'essence même de la tchoinerie." }
         ];
 
         let currentItem = 0;
@@ -2525,7 +2497,7 @@ Maintenant, sois TchoinGPT dans toute ta splendeur intelligente et délirante ! 
         const tchoinEmojis = ['💅', '👑', '💄', '✨', '💎', '🦄', '💋', '🎀'];
         const gameCards = [...tchoinEmojis, ...tchoinEmojis].sort(() => Math.random() - 0.5);
 
-        container.innerHTML = `
+        container.innerHTML = \`
             <div class="memory-game">
                 <h2>🧠💋 Memory Tchoin</h2>
                 <div class="game-stats">
@@ -2535,7 +2507,7 @@ Maintenant, sois TchoinGPT dans toute ta splendeur intelligente et délirante ! 
                 <div class="memory-grid" id="memory-grid"></div>
                 <button class="shuffle-btn" id="shuffle-btn">🔄 Nouvelle partie</button>
             </div>
-        `;
+        \`;
 
         const grid = container.querySelector('#memory-grid');
         const moveCounter = container.querySelector('#move-counter');
@@ -2550,10 +2522,10 @@ Maintenant, sois TchoinGPT dans toute ta splendeur intelligente et délirante ! 
                 card.dataset.emoji = emoji;
                 card.dataset.index = index;
                 
-                card.innerHTML = `
+                card.innerHTML = \`
                     <div class="card-front">❓</div>
-                    <div class="card-back">${emoji}</div>
-                `;
+                    <div class="card-back">\${emoji}</div>
+                \`;
                 
                 card.addEventListener('click', flipCard);
                 grid.appendChild(card);
@@ -2624,7 +2596,7 @@ Maintenant, sois TchoinGPT dans toute ta splendeur intelligente et délirante ! 
                 message = "Il faut travailler cette mémoire ma belle ! Mais c'est déjà un bon début ! 😊";
             }
 
-            container.innerHTML += `
+            container.innerHTML += \`
                 <div class="memory-results">
                     <h3>\${title}</h3>
                     <div class="final-stats">
@@ -2634,7 +2606,7 @@ Maintenant, sois TchoinGPT dans toute ta splendeur intelligente et délirante ! 
                     <div class="result-message">\${message}</div>
                     <button onclick="app.loadTchoinMemory(document.getElementById('game-content'))" class="replay-btn">🔄 Rejouer</button>
                 </div>
-            `;
+            \`;
         };
 
         const resetGame = () => {
@@ -2652,7 +2624,7 @@ Maintenant, sois TchoinGPT dans toute ta splendeur intelligente et délirante ! 
 
         // Styles CSS
         const style = document.createElement('style');
-        style.textContent = `
+        style.textContent = \`
             .memory-game { text-align: center; padding: 1rem; }
             .memory-grid { 
                 display: grid; 
@@ -2712,7 +2684,7 @@ Maintenant, sois TchoinGPT dans toute ta splendeur intelligente et délirante ! 
                 .memory-grid { max-width: 300px; }
                 .card-front, .card-back { font-size: 1.2rem; }
             }
-        `;
+        \`;
         document.head.appendChild(style);
     }
 
@@ -2723,7 +2695,7 @@ Maintenant, sois TchoinGPT dans toute ta splendeur intelligente et délirante ! 
         let tapInterval;
         let countdownInterval;
 
-        container.innerHTML = `
+        container.innerHTML = \`
             <div class="tap-game">
                 <h2>👆✨ Tap Tap Tchoin</h2>
                 <div class="tap-stats">
@@ -2736,7 +2708,7 @@ Maintenant, sois TchoinGPT dans toute ta splendeur intelligente et délirante ! 
                 <button class="start-tap-btn" id="start-tap">🚀 Start Tapping !</button>
                 <div class="tap-instructions">👆 Tape le plus vite possible sur l'emoji ! Plus tu tapes vite, plus tu gagnes de points ! 💅⚡</div>
             </div>
-        `;
+        \`;
 
         const scoreEl = container.querySelector('#tap-score');
         const timerEl = container.querySelector('#tap-timer');
@@ -2771,7 +2743,7 @@ Maintenant, sois TchoinGPT dans toute ta splendeur intelligente et délirante ! 
             // Effets visuels
             this.playBeep(400 + Math.random() * 400, 50);
             tapTarget.style.transform = 'scale(1.3) rotate(15deg)';
-            tapTarget.style.background = `hsl(\${Math.random() * 360}, 70%, 70%)`;
+            tapTarget.style.background = \`hsl(\${Math.random() * 360}, 70%, 70%)\`;
             
             setTimeout(() => {
                 tapTarget.style.transform = 'scale(1) rotate(0deg)';
@@ -2782,8 +2754,8 @@ Maintenant, sois TchoinGPT dans toute ta splendeur intelligente et délirante ! 
             
             // Animation de score
             const scorePopup = document.createElement('div');
-            scorePopup.textContent = `+\${points}`;
-            scorePopup.style.cssText = `
+            scorePopup.textContent = \`+\${points}\`;
+            scorePopup.style.cssText = \`
                 position: absolute;
                 top: 50%;
                 left: 50%;
@@ -2793,7 +2765,7 @@ Maintenant, sois TchoinGPT dans toute ta splendeur intelligente et délirante ! 
                 font-weight: bold;
                 pointer-events: none;
                 animation: scoreFloat 1s ease-out forwards;
-            `;
+            \`;
             tapArea.appendChild(scorePopup);
             setTimeout(() => scorePopup.remove(), 1000);
         };
@@ -2832,22 +2804,22 @@ Maintenant, sois TchoinGPT dans toute ta splendeur intelligente et délirante ! 
             
             if (score >= 200) {
                 title = "👑 DÉESSE DU TAP !";
-                message = `INCROYABLE ! \${tps} taps/sec ! Tes doigts sont des missiles ! 🚀💅`;
+                message = \`INCROYABLE ! \${tps} taps/sec ! Tes doigts sont des missiles ! 🚀💅\`;
             } else if (score >= 150) {
                 title = "⚡ SPEED DEMON !";
-                message = `EXCELLENT ! \${tps} taps/sec ! Tu as des doigts magiques ! ✨👆`;
+                message = \`EXCELLENT ! \${tps} taps/sec ! Tu as des doigts magiques ! ✨👆\`;
             } else if (score >= 100) {
                 title = "💄 BONNE VITESSE !";
-                message = `Pas mal ! \${tps} taps/sec ! Tu commences à maîtriser ! 🎯`;
+                message = \`Pas mal ! \${tps} taps/sec ! Tu commences à maîtriser ! 🎯\`;
             } else if (score >= 50) {
                 title = "🦄 DÉBUTANTE PROMETTEUSE !";
-                message = `C'est un début ! \${tps} taps/sec ! Il faut s'entraîner ! 💪`;
+                message = \`C'est un début ! \${tps} taps/sec ! Il faut s'entraîner ! 💪\`;
             } else {
                 title = "😅 SLOW MOTION !";
-                message = `\${tps} taps/sec... Es-tu sûre que tes doigts fonctionnent ? 😂💅`;
+                message = \`\${tps} taps/sec... Es-tu sûre que tes doigts fonctionnent ? 😂💅\`;
             }
 
-            container.innerHTML += `
+            container.innerHTML += \`
                 <div class="tap-results">
                     <h3>\${title}</h3>
                     <div class="final-stats">
@@ -2858,7 +2830,7 @@ Maintenant, sois TchoinGPT dans toute ta splendeur intelligente et délirante ! 
                     <div class="result-message">\${message}</div>
                     <button onclick="app.loadTchoinTap(document.getElementById('game-content'))" class="replay-btn">🔄 Rejouer</button>
                 </div>
-            `;
+            \`;
         };
 
         tapTarget.addEventListener('click', onTap);
@@ -2867,7 +2839,7 @@ Maintenant, sois TchoinGPT dans toute ta splendeur intelligente et délirante ! 
 
         // Styles CSS
         const style = document.createElement('style');
-        style.textContent = `
+        style.textContent = \`
             .tap-game { text-align: center; padding: 1rem; }
             .tap-area { 
                 position: relative;
@@ -2926,7 +2898,7 @@ Maintenant, sois TchoinGPT dans toute ta splendeur intelligente et délirante ! 
                 0% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
                 100% { opacity: 0; transform: translate(-50%, -100%) scale(1.5); }
             }
-        `;
+        \`;
         document.head.appendChild(style);
     }
 
@@ -2943,7 +2915,7 @@ Maintenant, sois TchoinGPT dans toute ta splendeur intelligente et délirante ! 
             ['💋', '🎀', '']
         ];
 
-        container.innerHTML = `
+        container.innerHTML = \`
             <div class="slide-game">
                 <h2>🔄💎 Slide Puzzle Tchoin</h2>
                 <div class="puzzle-info">
@@ -2964,7 +2936,7 @@ Maintenant, sois TchoinGPT dans toute ta splendeur intelligente et délirante ! 
                 </div>
                 <div class="slide-instructions">👆 Tape sur une case adjacente à l'espace vide pour la faire glisser ! 🔄</div>
             </div>
-        `;
+        \`;
 
         const gridEl = container.querySelector('#puzzle-grid');
         const movesEl = container.querySelector('#slide-moves');
@@ -3059,19 +3031,19 @@ Maintenant, sois TchoinGPT dans toute ta splendeur intelligente et délirante ! 
             
             if (moves <= 20) {
                 title = "🧠👑 GÉNIE DU PUZZLE !";
-                message = `INCROYABLE ! Tu as résolu le puzzle en seulement \${moves} mouvements ! 🏆✨`;
+                message = \`INCROYABLE ! Tu as résolu le puzzle en seulement \${moves} mouvements ! 🏆✨\`;
             } else if (moves <= 50) {
                 title = "💅 EXCELLENTE LOGIQUE !";
-                message = `Bravo ! \${moves} mouvements, tu maîtrises l'art du puzzle ! 🎯💎`;
+                message = \`Bravo ! \${moves} mouvements, tu maîtrises l'art du puzzle ! 🎯💎\`;
             } else if (moves <= 100) {
                 title = "✨ BONNE PERSÉVÉRANCE !";
-                message = `Bien joué ! \${moves} mouvements, tu as trouvé la solution ! 🦄`;
+                message = \`Bien joué ! \${moves} mouvements, tu as trouvé la solution ! 🦄\`;
             } else {
                 title = "💄 MISSION ACCOMPLIE !";
-                message = `\${moves} mouvements ! L'important c'est d'arriver au bout ! 💪😊`;
+                message = \`\${moves} mouvements ! L'important c'est d'arriver au bout ! 💪😊\`;
             }
 
-            container.innerHTML += `
+            container.innerHTML += \`
                 <div class="slide-win">
                     <h3>\${title}</h3>
                     <div class="win-animation">🎉✨🏆✨🎉</div>
@@ -3079,7 +3051,7 @@ Maintenant, sois TchoinGPT dans toute ta splendeur intelligente et délirante ! 
                     <div class="win-message">\${message}</div>
                     <button onclick="app.loadTchoinSlide(document.getElementById('game-content'))" class="replay-btn">🔄 Nouveau puzzle</button>
                 </div>
-            `;
+            \`;
         };
 
         // Mélanger le puzzle
@@ -3131,7 +3103,7 @@ Maintenant, sois TchoinGPT dans toute ta splendeur intelligente et délirante ! 
             const hintDiv = document.createElement('div');
             hintDiv.className = 'hint-popup';
             hintDiv.textContent = randomHint;
-            hintDiv.style.cssText = `
+            hintDiv.style.cssText = \`
                 position: fixed;
                 top: 50%;
                 left: 50%;
@@ -3143,7 +3115,7 @@ Maintenant, sois TchoinGPT dans toute ta splendeur intelligente et délirante ! 
                 font-size: 1.1rem;
                 z-index: 1000;
                 animation: hintFade 3s ease-out forwards;
-            `;
+            \`;
             
             document.body.appendChild(hintDiv);
             setTimeout(() => hintDiv.remove(), 3000);
@@ -3159,7 +3131,7 @@ Maintenant, sois TchoinGPT dans toute ta splendeur intelligente et délirante ! 
 
         // Styles CSS
         const style = document.createElement('style');
-        style.textContent = `
+        style.textContent = \`
             .slide-game { text-align: center; padding: 1rem; }
             .puzzle-info { 
                 display: flex; 
@@ -3256,482 +3228,8 @@ Maintenant, sois TchoinGPT dans toute ta splendeur intelligente et délirante ! 
                 .puzzle-cell { font-size: 1.5rem; }
                 .puzzle-info { flex-direction: column; gap: 1rem; }
             }
-        `;
+        \`;
         document.head.appendChild(style);
-    }
-
-    setupRandomPhotos() {
-        // Liste des photos disponibles
-        this.photoList = [
-            "Photo le 18-06-2025 à 15.39 #2.jpg",
-            "Photo le 18-06-2025 à 15.39.jpg",
-            "Photo le 18-06-2025 à 15.41.jpg",
-            "Photo le 18-06-2025 à 15.42 #2.jpg",
-            "Photo le 18-06-2025 à 15.42 #3.jpg",
-            "Photo le 18-06-2025 à 15.42 #5.jpg",
-            "Photo le 18-06-2025 à 15.42.jpg",
-            "Photo le 18-06-2025 à 15.48.jpg",
-            "Photo le 18-06-2025 à 15.54.jpg",
-            "Photo le 18-06-2025 à 15.59 #2.jpg",
-            "Photo le 18-06-2025 à 16.01 #2.jpg",
-            "Photo le 18-06-2025 à 16.03.jpg"
-        ];
-
-        // Créer le conteneur pour les photos flash
-        const photoFlashContainer = document.createElement('div');
-        photoFlashContainer.id = 'photo-flash-container';
-        photoFlashContainer.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            z-index: 9999;
-            pointer-events: none;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-        `;
-        document.body.appendChild(photoFlashContainer);
-
-        // Programmer l'affichage aléatoire des photos
-        this.scheduleRandomPhoto();
-    }
-
-    scheduleRandomPhoto() {
-        // Attendre entre 30 et 60 secondes avant la prochaine photo (plus espacé pour éviter les erreurs)
-        const randomDelay = 30000 + Math.random() * 30000;
-        
-        setTimeout(() => {
-            this.showRandomPhoto();
-            this.scheduleRandomPhoto(); // Programmer la prochaine
-        }, randomDelay);
-    }
-
-    showRandomPhoto() {
-        const photoContainer = document.getElementById('photo-flash-container');
-        if (!photoContainer) return;
-
-        // Choisir une photo aléatoire
-        const randomPhoto = this.photoList[Math.floor(Math.random() * this.photoList.length)];
-        const photoPath = `photos/${encodeURIComponent(randomPhoto)}`;
-        
-        console.log('📸✨ Affichage photo flash:', randomPhoto);
-
-        // Définir l'image de fond
-        photoContainer.style.backgroundImage = `url('${photoPath}')`;
-        
-        // Afficher avec effet fade in
-        photoContainer.style.opacity = '1';
-        
-        // Son de flash photo
-        this.playBeep(800, 100);
-        setTimeout(() => this.playBeep(600, 80), 100);
-        
-        // Masquer après 1.5 secondes
-        setTimeout(() => {
-            photoContainer.style.opacity = '0';
-            
-            // Nettoyer l'image après la transition
-            setTimeout(() => {
-                photoContainer.style.backgroundImage = '';
-            }, 300);
-        }, 1500);
-    }
-
-    loadTchoinSnake(container) {
-        let snake = [{ x: 10, y: 10 }];
-        let direction = { x: 0, y: 0 };
-        let food = { x: 15, y: 15 };
-        let score = 0;
-        let gameRunning = false;
-        let gameLoop;
-        const gridSize = 20;
-        const tileCount = 20;
-
-        container.innerHTML = `
-            <div class="snake-game">
-                <h2>🐍💅 Snake Tchoin</h2>
-                <div class="snake-stats">
-                    <div class="score">Score: <span id="snake-score">0</span></div>
-                    <div class="high-score">Best: <span id="snake-high-score">${localStorage.getItem('snakeHighScore') || 0}</span></div>
-                </div>
-                <canvas id="snake-canvas" width="400" height="400"></canvas>
-                <div class="snake-controls">
-                    <button id="snake-start" class="snake-btn">🚀 Start Game</button>
-                    <button id="snake-pause" class="snake-btn" style="display: none;">⏸️ Pause</button>
-                </div>
-                <div class="mobile-controls">
-                    <div class="control-row">
-                        <button class="control-btn" data-direction="up">⬆️</button>
-                    </div>
-                    <div class="control-row">
-                        <button class="control-btn" data-direction="left">⬅️</button>
-                        <button class="control-btn" data-direction="right">➡️</button>
-                    </div>
-                    <div class="control-row">
-                        <button class="control-btn" data-direction="down">⬇️</button>
-                    </div>
-                </div>
-                <div class="snake-instructions">
-                    🎮 Utilise les flèches du clavier ou les boutons pour déplacer le serpent tchoin !<br>
-                    🍎 Mange les fruits pour grandir et gagner des points ! 💅✨
-                </div>
-            </div>
-        `;
-
-        const canvas = container.querySelector('#snake-canvas');
-        const ctx = canvas.getContext('2d');
-        const scoreEl = container.querySelector('#snake-score');
-        const highScoreEl = container.querySelector('#snake-high-score');
-        const startBtn = container.querySelector('#snake-start');
-        const pauseBtn = container.querySelector('#snake-pause');
-
-        // Emojis pour le snake tchoin
-        const snakeEmojis = ['💅', '👑', '💄', '✨', '💎'];
-        const foodEmojis = ['🍓', '🍎', '🍑', '🍊', '🍇', '🥝', '🍉'];
-        let currentSnakeEmoji = snakeEmojis[Math.floor(Math.random() * snakeEmojis.length)];
-        let currentFoodEmoji = foodEmojis[Math.floor(Math.random() * foodEmojis.length)];
-
-        const drawSnake = () => {
-            ctx.fillStyle = 'rgba(255, 105, 180, 0.8)';
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
-            ctx.lineWidth = 2;
-            
-            snake.forEach((segment, index) => {
-                const x = segment.x * gridSize;
-                const y = segment.y * gridSize;
-                
-                // Corps du serpent avec dégradé
-                if (index === 0) {
-                    // Tête avec emoji
-                    ctx.fillStyle = 'rgba(255, 105, 180, 0.9)';
-                    ctx.fillRect(x, y, gridSize - 2, gridSize - 2);
-                    ctx.strokeRect(x, y, gridSize - 2, gridSize - 2);
-                    
-                    // Emoji sur la tête
-                    ctx.font = '16px Arial';
-                    ctx.textAlign = 'center';
-                    ctx.fillText(currentSnakeEmoji, x + gridSize/2, y + gridSize/2 + 5);
-                } else {
-                    // Corps avec dégradé
-                    const alpha = 0.8 - (index * 0.1);
-                    ctx.fillStyle = `rgba(255, 105, 180, ${Math.max(alpha, 0.3)})`;
-                    ctx.fillRect(x, y, gridSize - 2, gridSize - 2);
-                    ctx.strokeRect(x, y, gridSize - 2, gridSize - 2);
-                }
-            });
-        };
-
-        const drawFood = () => {
-            const x = food.x * gridSize;
-            const y = food.y * gridSize;
-            
-            // Fond coloré pour la nourriture
-            ctx.fillStyle = 'rgba(255, 215, 0, 0.8)';
-            ctx.fillRect(x, y, gridSize - 2, gridSize - 2);
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
-            ctx.lineWidth = 2;
-            ctx.strokeRect(x, y, gridSize - 2, gridSize - 2);
-            
-            // Emoji nourriture
-            ctx.font = '16px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillStyle = 'white';
-            ctx.fillText(currentFoodEmoji, x + gridSize/2, y + gridSize/2 + 5);
-        };
-
-        const generateFood = () => {
-            let newFood;
-            do {
-                newFood = {
-                    x: Math.floor(Math.random() * tileCount),
-                    y: Math.floor(Math.random() * tileCount)
-                };
-            } while (snake.some(segment => segment.x === newFood.x && segment.y === newFood.y));
-            
-            food = newFood;
-            currentFoodEmoji = foodEmojis[Math.floor(Math.random() * foodEmojis.length)];
-        };
-
-        const update = () => {
-            if (!gameRunning) return;
-
-            const head = { x: snake[0].x + direction.x, y: snake[0].y + direction.y };
-
-            // Collision avec les murs (téléportation)
-            if (head.x < 0) head.x = tileCount - 1;
-            if (head.x >= tileCount) head.x = 0;
-            if (head.y < 0) head.y = tileCount - 1;
-            if (head.y >= tileCount) head.y = 0;
-
-            // Collision avec soi-même
-            if (snake.some(segment => segment.x === head.x && segment.y === head.y)) {
-                gameOver();
-                return;
-            }
-
-            snake.unshift(head);
-
-            // Manger la nourriture
-            if (head.x === food.x && head.y === food.y) {
-                score += 10;
-                scoreEl.textContent = score;
-                this.playBeep(800, 150);
-                generateFood();
-                
-                // Changer l'emoji du serpent parfois
-                if (Math.random() < 0.3) {
-                    currentSnakeEmoji = snakeEmojis[Math.floor(Math.random() * snakeEmojis.length)];
-                }
-            } else {
-                snake.pop();
-            }
-
-            draw();
-        };
-
-        const draw = () => {
-            // Background avec dégradé
-            const gradient = ctx.createLinearGradient(0, 0, 400, 400);
-            gradient.addColorStop(0, 'rgba(255, 105, 180, 0.1)');
-            gradient.addColorStop(1, 'rgba(218, 112, 214, 0.1)');
-            ctx.fillStyle = gradient;
-            ctx.fillRect(0, 0, 400, 400);
-
-            // Grille subtile
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
-            ctx.lineWidth = 1;
-            for (let i = 0; i <= tileCount; i++) {
-                ctx.beginPath();
-                ctx.moveTo(i * gridSize, 0);
-                ctx.lineTo(i * gridSize, 400);
-                ctx.stroke();
-                
-                ctx.beginPath();
-                ctx.moveTo(0, i * gridSize);
-                ctx.lineTo(400, i * gridSize);
-                ctx.stroke();
-            }
-
-            drawFood();
-            drawSnake();
-        };
-
-        const gameOver = () => {
-            gameRunning = false;
-            clearInterval(gameLoop);
-            
-            this.playBeep(200, 500);
-            
-            // High score
-            const highScore = parseInt(localStorage.getItem('snakeHighScore') || 0);
-            if (score > highScore) {
-                localStorage.setItem('snakeHighScore', score);
-                highScoreEl.textContent = score;
-                this.playBeep(1000, 300);
-                
-                alert(`🏆 NOUVEAU RECORD ! 🏆\nScore: ${score} points\nTu es officiellement la reine du Snake Tchoin ! 👑💅`);
-            } else {
-                let message = "";
-                if (score >= 100) {
-                    message = `💅 EXCELLENT ! ${score} points ! Tu maîtrises l'art du serpent tchoin ! 🐍✨`;
-                } else if (score >= 50) {
-                    message = `✨ PAS MAL ! ${score} points ! Continue comme ça ma belle ! 💄`;
-                } else if (score >= 20) {
-                    message = `🦄 C'EST UN DÉBUT ! ${score} points ! Il faut s'entraîner ! 💪`;
-                } else {
-                    message = `😅 OH NON ! ${score} points... Le serpent avait faim de liberté ! 🐍💔`;
-                }
-                alert(message);
-            }
-            
-            startBtn.style.display = 'block';
-            pauseBtn.style.display = 'none';
-            startBtn.textContent = '🔄 Rejouer';
-        };
-
-        const startGame = () => {
-            snake = [{ x: 10, y: 10 }];
-            direction = { x: 0, y: 0 };
-            score = 0;
-            scoreEl.textContent = '0';
-            gameRunning = true;
-            
-            generateFood();
-            currentSnakeEmoji = snakeEmojis[Math.floor(Math.random() * snakeEmojis.length)];
-            
-            startBtn.style.display = 'none';
-            pauseBtn.style.display = 'block';
-            
-            gameLoop = setInterval(update, 150);
-            draw();
-        };
-
-        const pauseGame = () => {
-            gameRunning = !gameRunning;
-            if (gameRunning) {
-                gameLoop = setInterval(update, 150);
-                pauseBtn.textContent = '⏸️ Pause';
-            } else {
-                clearInterval(gameLoop);
-                pauseBtn.textContent = '▶️ Play';
-            }
-        };
-
-        const changeDirection = (newDirection) => {
-            if (!gameRunning) return;
-            
-            // Empêcher de faire demi-tour
-            if (direction.x !== 0 && newDirection.x !== 0) return;
-            if (direction.y !== 0 && newDirection.y !== 0) return;
-            
-            direction = newDirection;
-            this.playBeep(400, 50);
-        };
-
-        // Event listeners
-        startBtn.addEventListener('click', startGame);
-        pauseBtn.addEventListener('click', pauseGame);
-
-        // Contrôles clavier
-        document.addEventListener('keydown', (e) => {
-            if (!gameRunning) return;
-            
-            switch(e.key) {
-                case 'ArrowUp':
-                    e.preventDefault();
-                    changeDirection({ x: 0, y: -1 });
-                    break;
-                case 'ArrowDown':
-                    e.preventDefault();
-                    changeDirection({ x: 0, y: 1 });
-                    break;
-                case 'ArrowLeft':
-                    e.preventDefault();
-                    changeDirection({ x: -1, y: 0 });
-                    break;
-                case 'ArrowRight':
-                    e.preventDefault();
-                    changeDirection({ x: 1, y: 0 });
-                    break;
-                case ' ':
-                    e.preventDefault();
-                    pauseGame();
-                    break;
-            }
-        });
-
-        // Contrôles tactiles
-        container.querySelectorAll('.control-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const dir = btn.dataset.direction;
-                switch(dir) {
-                    case 'up': changeDirection({ x: 0, y: -1 }); break;
-                    case 'down': changeDirection({ x: 0, y: 1 }); break;
-                    case 'left': changeDirection({ x: -1, y: 0 }); break;
-                    case 'right': changeDirection({ x: 1, y: 0 }); break;
-                }
-            });
-        });
-
-        // Styles CSS
-        const style = document.createElement('style');
-        style.textContent = `
-            .snake-game { 
-                text-align: center; 
-                padding: 1rem; 
-                user-select: none;
-            }
-            .snake-stats { 
-                display: flex; 
-                justify-content: space-around; 
-                margin: 1rem 0; 
-                font-size: 1.2rem; 
-                font-weight: bold;
-            }
-            #snake-canvas { 
-                border: 3px solid rgba(255, 105, 180, 0.5); 
-                border-radius: 15px; 
-                background: rgba(0, 0, 0, 0.1); 
-                margin: 1rem 0;
-                max-width: 100%;
-                height: auto;
-            }
-            .snake-controls { 
-                margin: 1rem 0; 
-            }
-            .snake-btn { 
-                background: rgba(255, 105, 180, 0.3); 
-                border: 2px solid rgba(255, 255, 255, 0.5); 
-                color: white; 
-                padding: 1rem 2rem; 
-                border-radius: 25px; 
-                font-size: 1.2rem; 
-                cursor: pointer; 
-                margin: 0.5rem;
-                transition: all 0.3s;
-            }
-            .snake-btn:hover { 
-                background: rgba(255, 105, 180, 0.5); 
-                transform: scale(1.05);
-            }
-            .mobile-controls { 
-                display: grid; 
-                gap: 0.5rem; 
-                max-width: 200px; 
-                margin: 1rem auto;
-            }
-            .control-row { 
-                display: flex; 
-                justify-content: center; 
-                gap: 0.5rem;
-            }
-            .control-btn { 
-                background: rgba(255, 105, 180, 0.3); 
-                border: 2px solid rgba(255, 255, 255, 0.5); 
-                color: white; 
-                width: 50px; 
-                height: 50px; 
-                border-radius: 10px; 
-                font-size: 1.5rem; 
-                cursor: pointer;
-                transition: all 0.2s;
-            }
-            .control-btn:hover, .control-btn:active { 
-                background: rgba(255, 105, 180, 0.6); 
-                transform: scale(1.1);
-            }
-            .snake-instructions { 
-                margin: 1rem 0; 
-                opacity: 0.8; 
-                font-size: 0.9rem; 
-                max-width: 400px;
-                margin-left: auto;
-                margin-right: auto;
-                line-height: 1.4;
-            }
-            @media (max-width: 480px) {
-                #snake-canvas { 
-                    width: 100%; 
-                    max-width: 350px;
-                }
-                .snake-stats { 
-                    font-size: 1rem; 
-                }
-                .control-btn { 
-                    width: 45px; 
-                    height: 45px; 
-                    font-size: 1.3rem;
-                }
-            }
-        `;
-        document.head.appendChild(style);
-
-        // Dessiner l'état initial
-        draw();
     }
 }
 
