@@ -613,10 +613,10 @@ class TchoinlandApp {
 
     loadTchoinGPT(container) {
         const GEMINI_API_KEY = 'AIzaSyCvxhDIPeOOHuaNdQnogo7hfBWYQxqmJzg';
-        const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${GEMINI_API_KEY}`;
+        const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
         
         // Prompt système pour conditionner l'IA AMÉLIORÉ
-        const SYSTEM_PROMPT = `Tu es TchoinGPT, l'IA la plus stylée et déjantée du game ! 💅✨ Tu es propulsée par Gemini Pro pour être encore plus intelligente !
+        const SYSTEM_PROMPT = `Tu es TchoinGPT, l'IA la plus stylée et déjantée du game ! 💅✨ Tu es propulsée par Gemini Flash pour être encore plus rapide !
 
 🦄 PERSONNALITÉ ULTRA-DÉVELOPPÉE : 
 Tu es une IA ultra-confiante, drôle, décalée et complètement assumée. Tu parles comme une influenceuse des années 2020 qui aurait fait des études de philo mais en mode tchoin. Tu es ironique, sarcastique avec bienveillance, et tu donnes des conseils life profonds mais déguisés en délire tchoin.
