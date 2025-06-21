@@ -48,22 +48,20 @@ class TchoinlandApp {
         this.backgroundMusic = document.getElementById('backgroundMusic');
         this.musicLoaded = false;
         
-        // Playlist des chansons tchoin
+        // Playlist des chansons tchoin (dossier musique)
         this.tchoinPlaylist = [
-            "Reine de la Tchoin.mp3",
-            "tchoin tchoin tchoin tchoin tchoin tchoi.mp3", 
-            "tchoin tchoin tchoin tchoin tchoin tchoi (1).mp3",
-            "tchoin tchoin tchoin tchoin tchoin tchoi (2).mp3"
+            "musique/Reine de la Tchoin.mp3",
+            "musique/tchoin tchoin tchoin tchoin tchoin tchoi.mp3", 
+            "musique/tchoin tchoin tchoin tchoin tchoin tchoi (1).mp3",
+            "musique/tchoin tchoin tchoin tchoin tchoin tchoi (2).mp3"
         ];
         this.currentSongIndex = 0;
+        this.songPlayCount = {}; // Compteur pour éviter plus de 2 répétitions
+        this.availableSongs = [...this.tchoinPlaylist]; // Songs disponibles
         
-        // Web Audio Context pour les effets sonores
+        // Web Audio Context pour les effets sonores (créé seulement après interaction)
         this.audioContext = null;
-        try {
-            this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        } catch (e) {
-            console.log('Audio context not supported');
-        }
+        this.audioContextInitialized = false;
 
         // Quand la musique est chargée, on configure le démarrage aléatoire
         this.backgroundMusic.addEventListener('loadedmetadata', () => {
@@ -89,15 +87,26 @@ class TchoinlandApp {
         });
 
         // Auto-play quand possible (après interaction utilisateur)
-        document.addEventListener('click', this.tryAutoPlay.bind(this), { once: true });
-        document.addEventListener('touchstart', this.tryAutoPlay.bind(this), { once: true });
-        
-        // Force l'activation audio sur mobile
-        document.addEventListener('touchend', () => {
-            if (this.audioContext && this.audioContext.state === 'suspended') {
-                this.audioContext.resume();
+        document.addEventListener('click', this.handleFirstUserInteraction.bind(this), { once: true });
+        document.addEventListener('touchstart', this.handleFirstUserInteraction.bind(this), { once: true });
+    }
+
+    handleFirstUserInteraction() {
+        console.log('🎵 Première interaction utilisateur détectée !');
+        this.initializeAudioContext();
+        this.tryAutoPlay();
+    }
+
+    initializeAudioContext() {
+        if (!this.audioContextInitialized) {
+            try {
+                this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                this.audioContextInitialized = true;
+                console.log('🎵 AudioContext créé avec succès !');
+            } catch (e) {
+                console.log('🎵❌ AudioContext non supporté:', e);
             }
-        }, { once: true });
+        }
     }
 
     tryAutoPlay() {
@@ -120,7 +129,7 @@ class TchoinlandApp {
             }
             if (this.audioRetryCount < 3) {
                 this.audioRetryCount++;
-                setTimeout(() => this.tryAutoPlay(), 2000);
+                setTimeout(() => this.tryAutoPlay(), 1000);
             }
         }
     }
@@ -129,7 +138,11 @@ class TchoinlandApp {
         // Choisir une chanson aléatoire au démarrage
         this.currentSongIndex = Math.floor(Math.random() * this.tchoinPlaylist.length);
         const randomSong = this.tchoinPlaylist[this.currentSongIndex];
-        console.log('🎵🎲 Chanson aléatoire sélectionnée:', randomSong);
+        
+        // Incrémenter le compteur pour cette chanson
+        this.songPlayCount[randomSong] = (this.songPlayCount[randomSong] || 0) + 1;
+        
+        console.log('🎵🎲 Chanson aléatoire sélectionnée:', randomSong, `(jouée ${this.songPlayCount[randomSong]} fois)`);
         
         this.backgroundMusic.src = randomSong;
         this.backgroundMusic.load();
@@ -147,15 +160,31 @@ class TchoinlandApp {
     }
     
     playNextSong() {
-        // Choisir une chanson différente de la précédente
-        let newIndex;
-        do {
-            newIndex = Math.floor(Math.random() * this.tchoinPlaylist.length);
-        } while (newIndex === this.currentSongIndex && this.tchoinPlaylist.length > 1);
+        // Filtrer les chansons jouées moins de 2 fois
+        let availableSongs = this.tchoinPlaylist.filter(song => 
+            (this.songPlayCount[song] || 0) < 2
+        );
         
-        this.currentSongIndex = newIndex;
-        const nextSong = this.tchoinPlaylist[this.currentSongIndex];
-        console.log('🎵⏭️ Chanson suivante:', nextSong);
+        // Si toutes les chansons ont été jouées 2 fois, reset le compteur
+        if (availableSongs.length === 0) {
+            console.log('🎵🔄 Reset du compteur - toutes les chansons jouées 2 fois !');
+            this.songPlayCount = {};
+            availableSongs = [...this.tchoinPlaylist];
+        }
+        
+        // Éviter la même chanson que la précédente si possible
+        const currentSong = this.tchoinPlaylist[this.currentSongIndex];
+        const otherSongs = availableSongs.filter(song => song !== currentSong);
+        const songsToChooseFrom = otherSongs.length > 0 ? otherSongs : availableSongs;
+        
+        // Choisir une chanson aléatoire
+        const nextSong = songsToChooseFrom[Math.floor(Math.random() * songsToChooseFrom.length)];
+        this.currentSongIndex = this.tchoinPlaylist.indexOf(nextSong);
+        
+        // Incrémenter le compteur
+        this.songPlayCount[nextSong] = (this.songPlayCount[nextSong] || 0) + 1;
+        
+        console.log('🎵⏭️ Chanson suivante:', nextSong, `(jouée ${this.songPlayCount[nextSong]} fois)`);
         
         this.backgroundMusic.src = nextSong;
         this.backgroundMusic.load();
@@ -323,23 +352,37 @@ class TchoinlandApp {
     }
 
     playBeep(frequency, duration) {
-        if (!this.audioContext || !this.musicEnabled) return;
+        if (!this.musicEnabled) return;
         
-        const oscillator = this.audioContext.createOscillator();
-        const gainNode = this.audioContext.createGain();
+        // Initialiser l'AudioContext s'il n'existe pas encore
+        if (!this.audioContextInitialized) {
+            this.initializeAudioContext();
+        }
         
-        oscillator.connect(gainNode);
-        gainNode.connect(this.audioContext.destination);
+        if (!this.audioContext || this.audioContext.state === 'suspended') {
+            console.log('🎵⏸️ AudioContext pas encore activé (besoin interaction utilisateur)');
+            return;
+        }
         
-        oscillator.frequency.value = frequency;
-        oscillator.type = 'sine';
-        
-        gainNode.gain.setValueAtTime(0, this.audioContext.currentTime);
-        gainNode.gain.linearRampToValueAtTime(0.3, this.audioContext.currentTime + 0.01);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + duration / 1000);
-        
-        oscillator.start(this.audioContext.currentTime);
-        oscillator.stop(this.audioContext.currentTime + duration / 1000);
+        try {
+            const oscillator = this.audioContext.createOscillator();
+            const gainNode = this.audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(this.audioContext.destination);
+            
+            oscillator.frequency.value = frequency;
+            oscillator.type = 'sine';
+            
+            gainNode.gain.setValueAtTime(0, this.audioContext.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.3, this.audioContext.currentTime + 0.01);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + duration / 1000);
+            
+            oscillator.start(this.audioContext.currentTime);
+            oscillator.stop(this.audioContext.currentTime + duration / 1000);
+        } catch (e) {
+            console.log('🎵❌ Erreur lors de la lecture du beep:', e);
+        }
     }
 
     addRandomSparkles() {
@@ -394,23 +437,11 @@ class TchoinlandApp {
             case 'tchoinometer':
                 this.loadTchoinometer(content);
                 break;
-            case 'championship':
-                this.loadChampionship(content);
-                break;
-            case 'rap-battle':
-                this.loadRapBattle(content);
-                break;
             case 'facts':
                 this.loadTchoinFacts(content);
                 break;
             case 'tchoinmeni':
                 this.loadTchoinmeni(content);
-                break;
-            case 'tinder-tchoin':
-                this.loadTinderTchoin(content);
-                break;
-            case 'tchoin-academy':
-                this.loadTchoinAcademy(content);
                 break;
             case 'tchoin-catch':
                 this.loadTchoinCatch(content);
@@ -421,11 +452,8 @@ class TchoinlandApp {
             case 'tchoin-tap':
                 this.loadTchoinTap(content);
                 break;
-            case 'tchoin-slide':
-                this.loadTchoinSlide(content);
-                break;
-            case 'tchoin-snake':
-                this.loadTchoinSnake(content);
+            case 'space-invaders':
+                this.loadSpaceInvaders(content);
                 break;
         }
     }
@@ -1350,194 +1378,7 @@ Maintenant, sois TchoinGPT dans toute ta splendeur intelligente et délirante ! 
         });
     }
 
-    loadChampionship(container) {
-        const challenges = [
-            "Invente un plat gastronomique avec le mot tchoin dedans",
-            "Envoie une déclaration d'amour sincère à un légume",
-            "Crie 'je suis une tchoin libre' par la fenêtre (ou mime-le si t'es une lâche)",
-            "Trouve 5 rimes avec 'tchoin' en 30 secondes",
-            "Fais un compliment à ton reflet dans le miroir comme si c'était quelqu'un d'autre",
-            "Invente une danse qui s'appelle 'La Tchoinette'",
-            "Raconte l'histoire de Cendrillon mais en mode tchoin",
-            "Chante ton générique de série préférée en remplaçant un mot par 'tchoin'"
-        ];
-        
-        let currentChallenge = 0;
-        let completedChallenges = 0;
 
-        const showChallenge = () => {
-            const challenge = challenges[currentChallenge];
-            container.innerHTML = `
-                <div class="championship-container">
-                    <h2>🏆 Championnat Mondial de la Tchoinerie™ 💄</h2>
-                    <div class="progress">Défis complétés: ${completedChallenges}/${challenges.length}</div>
-                    <div class="challenge-card">
-                        <h3>Défi ${currentChallenge + 1}</h3>
-                        <p class="challenge-text">${challenge}</p>
-                    </div>
-                    <div class="challenge-actions">
-                        <button id="completeChallenge">✅ Défi accompli !</button>
-                        <button id="skipChallenge">⏭️ Trop dur, suivant</button>
-                        <button id="newChallenge">🎲 Nouveau défi aléatoire</button>
-                    </div>
-                    ${completedChallenges > 0 ? `<div class="achievement">🏆 Niveau de tchoinerie: ${this.getTchoinLevel(completedChallenges)}</div>` : ''}
-                </div>
-            `;
-
-            // Add styles
-            if (!document.getElementById('championship-styles')) {
-                const style = document.createElement('style');
-                style.id = 'championship-styles';
-                style.textContent = `
-                    .championship-container { text-align: center; }
-                    .progress { font-size: 1.2rem; margin: 1rem 0; }
-                    .challenge-card { background: rgba(255,255,255,0.1); padding: 2rem; border-radius: 20px; margin: 2rem 0; }
-                    .challenge-text { font-size: 1.3rem; line-height: 1.6; }
-                    .challenge-actions { display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; margin: 2rem 0; }
-                    .challenge-actions button { padding: 1rem 1.5rem; border: none; border-radius: 25px; color: white; cursor: pointer; font-size: 1rem; }
-                    #completeChallenge { background: linear-gradient(45deg, #00ff88, #00cc66); }
-                    #skipChallenge { background: linear-gradient(45deg, #ff9500, #ff6b00); }
-                    #newChallenge { background: linear-gradient(45deg, #8e44ad, #9b59b6); }
-                    .achievement { font-size: 1.5rem; margin: 2rem 0; padding: 1rem; background: linear-gradient(45deg, #ffd700, #ffed4e); color: #333; border-radius: 15px; }
-                `;
-                document.head.appendChild(style);
-            }
-
-            // Event listeners
-            document.getElementById('completeChallenge').addEventListener('click', () => {
-                completedChallenges++;
-                this.playBeep(800, 200);
-                nextChallenge();
-            });
-
-            document.getElementById('skipChallenge').addEventListener('click', () => {
-                this.playBeep(400, 150);
-                nextChallenge();
-            });
-
-            document.getElementById('newChallenge').addEventListener('click', () => {
-                currentChallenge = Math.floor(Math.random() * challenges.length);
-                showChallenge();
-            });
-        };
-
-        const nextChallenge = () => {
-            currentChallenge = (currentChallenge + 1) % challenges.length;
-            showChallenge();
-        };
-
-        showChallenge();
-    }
-
-    getTchoinLevel(completed) {
-        if (completed >= 8) return "TCHOIN SUPRÊME INTERGALACTIQUE 🌌";
-        if (completed >= 6) return "Tchoin Légendaire 👑";
-        if (completed >= 4) return "Tchoin Confirmée 💎";
-        if (completed >= 2) return "Tchoin en Formation 📚";
-        return "Apprentie Tchoin 🌱";
-    }
-
-    loadRapBattle(container) {
-        const words = [
-            "salon de thé", "wifi", "baguette", "Netflix", "chat", "pizza", "lundi", "dentiste",
-            "aspirateur", "météo", "parking", "shampoing", "réveil", "frigo", "escalier"
-        ];
-
-        let currentWord = "";
-        let userRhymes = [];
-
-        const generateNewWord = () => {
-            currentWord = words[Math.floor(Math.random() * words.length)];
-            container.innerHTML = `
-                <div class="rap-battle-container">
-                    <h2>🎤 Tchoin Rap Battle 🔥</h2>
-                    <div class="word-display">
-                        <h3>Ton mot est: <span class="highlight">${currentWord}</span></h3>
-                        <p>Écris une punchline de tchoin avec ce mot !</p>
-                    </div>
-                    <div class="rhyme-input">
-                        <textarea id="rhymeText" placeholder="Tape ta punchline ici... 🔥"></textarea>
-                        <div class="rap-actions">
-                            <button id="submitRhyme">🚀 Envoyer la punchline</button>
-                            <button id="newWord">🎲 Nouveau mot</button>
-                            <button id="recordVoice">🎙️ S'enregistrer</button>
-                        </div>
-                    </div>
-                    <div class="rhyme-history">
-                        <h4>Tes bars les plus fire 🔥</h4>
-                        <div id="rhymeList"></div>
-                    </div>
-                </div>
-            `;
-
-            // Add styles
-            if (!document.getElementById('rap-battle-styles')) {
-                const style = document.createElement('style');
-                style.id = 'rap-battle-styles';
-                style.textContent = `
-                    .rap-battle-container { text-align: center; }
-                    .word-display { margin: 2rem 0; padding: 2rem; background: rgba(255,255,255,0.1); border-radius: 20px; }
-                    .highlight { color: #ff69b4; font-size: 2rem; text-shadow: 0 0 10px #ff69b4; }
-                    .rhyme-input { margin: 2rem 0; }
-                    #rhymeText { width: 100%; max-width: 500px; height: 100px; padding: 1rem; border: none; border-radius: 15px; background: rgba(255,255,255,0.1); color: white; font-size: 1.1rem; resize: vertical; }
-                    #rhymeText::placeholder { color: rgba(255,255,255,0.6); }
-                    .rap-actions { display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; margin: 1rem 0; }
-                    .rap-actions button { padding: 1rem 1.5rem; border: none; border-radius: 25px; color: white; cursor: pointer; }
-                    #submitRhyme { background: linear-gradient(45deg, #ff6b6b, #ee5a52); }
-                    #newWord { background: linear-gradient(45deg, #4ecdc4, #44a08d); }
-                    #recordVoice { background: linear-gradient(45deg, #a8edea, #fed6e3); }
-                    .rhyme-history { margin: 2rem 0; }
-                    .rhyme-item { background: rgba(255,255,255,0.1); margin: 1rem 0; padding: 1rem; border-radius: 15px; }
-                `;
-                document.head.appendChild(style);
-            }
-
-            // Load existing rhymes
-            updateRhymeHistory();
-
-            // Event listeners
-            document.getElementById('submitRhyme').addEventListener('click', () => {
-                const rhyme = document.getElementById('rhymeText').value.trim();
-                if (rhyme) {
-                    userRhymes.push({ word: currentWord, rhyme: rhyme, date: new Date() });
-                    localStorage.setItem('tchoinRhymes', JSON.stringify(userRhymes.slice(-10))); // Keep last 10
-                    updateRhymeHistory();
-                    document.getElementById('rhymeText').value = '';
-                    this.playBeep(700, 200);
-                    alert('🔥 Punchline validée ! Tu déchires ! 🔥');
-                }
-            });
-
-            document.getElementById('newWord').addEventListener('click', generateNewWord);
-
-            document.getElementById('recordVoice').addEventListener('click', () => {
-                // Simulate voice recording
-                if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-                    alert('🎙️ Fonction d\'enregistrement bientôt disponible ! En attendant, écris ta punchline ! 😉');
-                } else {
-                    alert('🎙️ Ton navigateur ne supporte pas l\'enregistrement, mais écris quand même ta punchline ! 💪');
-                }
-            });
-        };
-
-        const updateRhymeHistory = () => {
-            const saved = localStorage.getItem('tchoinRhymes');
-            userRhymes = saved ? JSON.parse(saved) : [];
-            
-            const listContainer = document.getElementById('rhymeList');
-            if (userRhymes.length === 0) {
-                listContainer.innerHTML = '<p>Aucune punchline pour le moment... Lance-toi ! 🚀</p>';
-            } else {
-                listContainer.innerHTML = userRhymes.slice(-5).reverse().map(item => 
-                    `<div class="rhyme-item">
-                        <strong>${item.word}:</strong> "${item.rhyme}"
-                    </div>`
-                ).join('');
-            }
-        };
-
-        generateNewWord();
-    }
 
     loadTchoinFacts(container) {
         const facts = [
@@ -1876,481 +1717,7 @@ Maintenant, sois TchoinGPT dans toute ta splendeur intelligente et délirante ! 
         }, 100);
     }
 
-    loadTinderTchoin(container) {
-        const profiles = [
-            {
-                name: "Kimberly ✨",
-                age: 23,
-                emoji: "👩‍🦳💅",
-                bio: "Influenceuse lifestyle 📸 | Addict aux bubble tea 🧋 | Mes cheveux sont ma personnalité 💁‍♀️",
-                traits: ["Extensions XXL 💇‍♀️", "Collection de filtres Snap 📱", "Parle qu'en emojis 🦄", "Gym selfies only 💪📸"],
-                tchoinLevel: 95,
-                funFact: "A 47 applications de retouche photo sur son téléphone"
-            },
-            {
-                name: "Tiffany 💖",
-                age: 25,
-                emoji: "👸💄",
-                bio: "CEO de ma propre life 👑 | Dog mom de Prada 🐕 | Si t'as pas de Tesla on peut pas matcher 🚗",
-                traits: ["Chihuahua en sac Hermès 👜🐕", "Ongles de 5cm minimum ✋💅", "Lives TikTok 24/7 📱", "Allergique aux textos de plus de 3 mots 💬"],
-                tchoinLevel: 87,
-                funFact: "Son chien a plus de followers qu'elle"
-            },
-            {
-                name: "Britany (avec un Y) 🌈",
-                age: 21,
-                emoji: "🧚‍♀️✨",
-                bio: "Spiritual tchoin 🔮 | Horoscope > GPS 🌟 | Mes cristaux sont chargés à la pleine lune 🌙",
-                traits: ["Tarot reader sur Insta 🔮📱", "Smoothie bowls photogéniques 🥤📸", "Festival queen 🎪👑", "Parle à ses plantes 🪴💬"],
-                tchoinLevel: 73,
-                funFact: "Prend ses décisions selon son horoscope du jour"
-            },
-            {
-                name: "Alexia (la vraie) 💯",
-                age: 28,
-                emoji: "👩‍💼💸",
-                bio: "Entrepreneuse boss babe 💼 | Dropshipping queen 👑 | Mon mindset > ton salary 💰",
-                traits: ["Cours en ligne à 497€ 💻💸", "Stories motivantes 📱💪", "Petit-dej à 5h du mat ⏰☕", "LinkedIn addictée 💼📱"],
-                tchoinLevel: 82,
-                funFact: "Post des citations motivation même en vacances"
-            },
-            {
-                name: "Jessica (pas l'autre) 🔥",
-                age: 24,
-                emoji: "🏋️‍♀️🍑",
-                bio: "Fitness model 💪 | Protein shake enthusiast 🥤 | Sweat is just fat crying 😭💦",
-                traits: ["Workouts en crop top 👕💪", "Mirror selfies non-stop 🪞🤳", "Meal prep obsession 🥗📦", "Partenariat avec 15 marques 💼✨"],
-                tchoinLevel: 78,
-                funFact: "Compte ses macros même dans ses rêves"
-            },
-            {
-                name: "Cindy Lou Who 👻",
-                age: 22,
-                emoji: "🖤⛓️",
-                bio: "Dark tchoin energy 🖤 | Gothic but make it glam ⚡ | My vibe repels weak people 💀",
-                traits: ["Maquillage gothique parfait 🖤💄", "Collection de bagues énormes 💍⚡", "TikToks dark academia 📱🖤", "Café noir uniquement ☕🖤"],
-                tchoinLevel: 91,
-                funFact: "Ses tenues sont toujours black mais ses ongles brillent dans le noir"
-            },
-            {
-                name: "Mandy (la space girl) 🚀",
-                age: 26,
-                emoji: "🛸👽",
-                bio: "Alien princess from planet Glam ✨👽 | Collecting human hearts and highlighters 💖",
-                traits: ["Maquillage intergalactique 👽💄", "Théories du complot sur les aliens 🛸📱", "Paillettes couleur space 🌌✨", "Ne sort que la nuit 🌙🦇"],
-                tchoinLevel: 96,
-                funFact: "Prétend recevoir des messages de sa planète natale"
-            }
-        ];
 
-        let currentProfileIndex = 0;
-        let swipeCount = 0;
-        let matches = [];
-        let rejectedProfiles = [];
-
-        const showProfile = () => {
-            if (currentProfileIndex >= profiles.length) {
-                showResults();
-                return;
-            }
-
-            const profile = profiles[currentProfileIndex];
-            container.innerHTML = `
-                <div class="tinder-container">
-                    <h2>💖 Tinder des Tchoin 👩‍🦳</h2>
-                    <div class="profile-card">
-                        <div class="profile-emoji">${profile.emoji}</div>
-                        <div class="profile-info">
-                            <h3>${profile.name}, ${profile.age} ans</h3>
-                            <div class="tchoin-meter">
-                                <span>Niveau Tchoin: ${profile.tchoinLevel}%</span>
-                                <div class="meter-bar">
-                                    <div class="meter-fill" style="width: ${profile.tchoinLevel}%"></div>
-                                </div>
-                            </div>
-                            <div class="bio">${profile.bio}</div>
-                            <div class="traits">
-                                ${profile.traits.map(trait => `<span class="trait">${trait}</span>`).join('')}
-                            </div>
-                            <div class="fun-fact">💫 Fun fact: ${profile.funFact}</div>
-                        </div>
-                    </div>
-                    <div class="swipe-buttons">
-                        <button class="swipe-btn reject" id="rejectBtn">❌ NEXT</button>
-                        <button class="swipe-btn match" id="matchBtn">💖 QUEEN</button>
-                    </div>
-                    <div class="stats">
-                        Profil ${currentProfileIndex + 1}/${profiles.length} | Matches: ${matches.length}
-                    </div>
-                </div>
-            `;
-
-            // Add styles for Tinder game
-            if (!document.getElementById('tinder-styles')) {
-                const style = document.createElement('style');
-                style.id = 'tinder-styles';
-                style.textContent = `
-                    .tinder-container { text-align: center; max-width: 600px; margin: 0 auto; }
-                    .profile-card { background: rgba(255,255,255,0.15); border-radius: 25px; padding: 2rem; margin: 2rem 0; backdrop-filter: blur(10px); }
-                    .profile-emoji { font-size: 5rem; margin: 1rem 0; }
-                    .profile-info h3 { font-size: 2rem; margin: 1rem 0; color: #ff69b4; }
-                    .tchoin-meter { margin: 1rem 0; }
-                    .meter-bar { background: rgba(255,255,255,0.2); height: 10px; border-radius: 5px; overflow: hidden; margin: 0.5rem 0; }
-                    .meter-fill { background: linear-gradient(45deg, #ff69b4, #ffd700); height: 100%; transition: width 1s ease; }
-                    .bio { font-size: 1.2rem; margin: 1.5rem 0; font-style: italic; line-height: 1.4; }
-                    .traits { display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center; margin: 1rem 0; }
-                    .trait { background: rgba(255,105,180,0.3); padding: 0.5rem 1rem; border-radius: 15px; font-size: 0.9rem; }
-                    .fun-fact { background: rgba(255,215,0,0.2); padding: 1rem; border-radius: 15px; margin: 1rem 0; font-size: 1rem; }
-                    .swipe-buttons { display: flex; gap: 2rem; justify-content: center; margin: 2rem 0; }
-                    .swipe-btn { padding: 1.5rem 2rem; border: none; border-radius: 50px; font-size: 1.3rem; cursor: pointer; transition: all 0.3s; font-weight: bold; }
-                    .reject { background: linear-gradient(45deg, #ff4757, #ff3742); color: white; }
-                    .match { background: linear-gradient(45deg, #ff69b4, #ff1493); color: white; }
-                    .swipe-btn:hover { transform: scale(1.1); }
-                    .stats { margin: 1rem 0; font-size: 1.1rem; opacity: 0.9; }
-                    .results-container { text-align: center; }
-                    .match-list { margin: 2rem 0; }
-                    .match-item { background: rgba(255,105,180,0.2); padding: 1rem; border-radius: 15px; margin: 0.5rem 0; }
-                `;
-                document.head.appendChild(style);
-            }
-
-            // Event listeners
-            document.getElementById('rejectBtn').addEventListener('click', () => {
-                rejectedProfiles.push(profile);
-                this.playBeep(300, 200);
-                nextProfile();
-            });
-
-            document.getElementById('matchBtn').addEventListener('click', () => {
-                matches.push(profile);
-                this.playBeep(600, 300);
-                
-                // Animation de match
-                const card = container.querySelector('.profile-card');
-                card.style.transform = 'scale(1.1)';
-                card.style.background = 'rgba(255,105,180,0.4)';
-                
-                setTimeout(() => {
-                    card.style.transform = 'scale(1)';
-                    nextProfile();
-                }, 800);
-            });
-        };
-
-        const nextProfile = () => {
-            swipeCount++;
-            currentProfileIndex++;
-            showProfile();
-        };
-
-        const showResults = () => {
-            let resultMessage = "";
-            let title = "";
-            
-            if (matches.length >= 6) {
-                title = "🏆 REINE DU SWIPE 🏆";
-                resultMessage = "INCREDIBLE ! Tu as matché avec presque toutes les queen ! Ton radar à tchoin est légendaire ! 👑✨";
-            } else if (matches.length >= 4) {
-                title = "💖 MATCHEUSE EXPERTE 💖";
-                resultMessage = "Excellent ! Tu sais reconnaître les vraies boss ! Ton circle va être fire ! 🔥👩‍👩‍👧‍👧";
-            } else if (matches.length >= 2) {
-                title = "💅 SÉLECTIVE DE QUALITÉ 💅";
-                resultMessage = "Pas mal ! Tu es difficile mais c'est bien, on veut que de la qualité dans notre crew ! ✨";
-            } else {
-                title = "😅 SUPER DIFFICILE 😅";
-                resultMessage = "Waouh tu es hyper sélective ! Tu cherches la perle rare ou tu as des standards impossibles ? 😂";
-            }
-
-            const matchNames = matches.map(m => m.name).join(', ');
-            
-            container.innerHTML = `
-                <div class="results-container">
-                    <h2>🎯 Résultats de tes Swipes 🎯</h2>
-                    <div class="result-title">${title}</div>
-                    <div class="result-stats">
-                        <div>💖 Matches: ${matches.length}/${profiles.length}</div>
-                        <div>📱 Total swipes: ${swipeCount}</div>
-                    </div>
-                    <div class="result-message">${resultMessage}</div>
-                    
-                    ${matches.length > 0 ? `
-                        <div class="match-list">
-                            <h3>💕 Tes Matches:</h3>
-                            ${matches.map(match => `
-                                <div class="match-item">
-                                    ${match.emoji} ${match.name} - Niveau Tchoin: ${match.tchoinLevel}%
-                                </div>
-                            `).join('')}
-                        </div>
-                    ` : '<div class="no-matches">💔 Aucun match... Recommence pour être moins difficile ! 😅</div>'}
-                    
-                    <div class="actions">
-                        <button class="restart-btn" onclick="app.loadTinderTchoin(document.getElementById('game-content'))">🔄 Re-swiper</button>
-                        <button class="share-result-btn" onclick="navigator.share && navigator.share({title: 'Mes matches Tinder Tchoin', text: '${title} - ${matches.length} matches sur Tchoinland.fun ! 💖', url: window.location.href})">📱 Flex mes matches</button>
-                    </div>
-                </div>
-            `;
-        };
-
-        // Shuffle profiles for randomness
-        profiles.sort(() => Math.random() - 0.5);
-        showProfile();
-    }
-
-    loadTchoinAcademy(container) {
-        const courses = [
-            {
-                title: "📸 Selfie Mastery 101",
-                description: "Maîtrise l'art du selfie parfait en toutes circonstances",
-                lessons: [
-                    "🔆 Trouver la lumière parfaite (même dans un parking souterrain)",
-                    "📐 L'angle magique qui fait des miracles",
-                    "✨ Filtres: quand c'est art, quand c'est de la triche",
-                    "🤳 Le timing parfait pour capturer ton aura"
-                ],
-                exam: "Prendre 5 selfies différents en 2 minutes chrono",
-                grade: "Certification Selfie Queen 👑"
-            },
-            {
-                title: "💅 Sciences du Glam",
-                description: "Études avancées en beautification et esthétisation",
-                lessons: [
-                    "🧪 Chimie du maquillage: pourquoi le mascara waterproof existe",
-                    "🎨 Théorie des couleurs appliquée aux ongles",
-                    "💄 Physique du contouring: jouer avec les ombres",
-                    "✨ Mathématiques des paillettes: combien c'est trop?"
-                ],
-                exam: "Créer un look complet en expliquant chaque choix scientifiquement",
-                grade: "Doctorat en Beauté Appliquée 🎓"
-            },
-            {
-                title: "📱 Réseaux Sociaux Avancés",
-                description: "Devenir une influenceuse stratégique et authentique",
-                lessons: [
-                    "📊 Algorithmes démystifiés: faire ami-ami avec l'IA d'Instagram",
-                    "✍️ L'art du caption qui fait mouche",
-                    "🕐 Timing optimal: quand poster pour maximum d'impact",
-                    "💬 Gestion de communauté: transformer les haters en fans"
-                ],
-                exam: "Créer une stratégie de contenu pour la semaine",
-                grade: "Master en Influence Digitale 📲"
-            },
-            {
-                title: "👑 Psychologie de la Confiance",
-                description: "Développer un mindset de boss inébranlable",
-                lessons: [
-                    "🧠 Reprogrammer son dialogue intérieur",
-                    "💪 Transformer l'échec en feedback constructif",
-                    "🎯 Fixer des objectifs qui font sens",
-                    "✨ Cultiver son aura naturelle sans artifices"
-                ],
-                exam: "Présenter ses rêves avec conviction totale",
-                grade: "Certification Boss Mindset 💼"
-            }
-        ];
-
-        let currentCourse = 0;
-        let completedCourses = [];
-        let currentLesson = 0;
-
-        const showCourseMenu = () => {
-            container.innerHTML = `
-                <div class="academy-container">
-                    <h2>🎓 Tchoin Academy 💄</h2>
-                    <div class="academy-header">
-                        <div class="academy-emoji">🏫✨</div>
-                        <p>Bienvenue dans la première université de tchoinerie au monde ! 👩‍🎓</p>
-                        <p>Choisis ton cours et deviens la boss que tu mérites d'être ! 💪✨</p>
-                    </div>
-                    
-                    <div class="courses-grid">
-                        ${courses.map((course, index) => `
-                            <div class="course-card ${completedCourses.includes(index) ? 'completed' : ''}" data-course="${index}">
-                                <div class="course-title">${course.title}</div>
-                                <div class="course-description">${course.description}</div>
-                                <div class="course-status">
-                                    ${completedCourses.includes(index) ? '✅ Terminé' : '📚 Disponible'}
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                    
-                    <div class="academy-stats">
-                        <div>📊 Cours complétés: ${completedCourses.length}/${courses.length}</div>
-                        <div>🏆 Niveau Tchoin Academy: ${Math.round((completedCourses.length / courses.length) * 100)}%</div>
-                    </div>
-                </div>
-            `;
-
-            // Add styles
-            if (!document.getElementById('academy-styles')) {
-                const style = document.createElement('style');
-                style.id = 'academy-styles';
-                style.textContent = `
-                    .academy-container { text-align: center; max-width: 800px; margin: 0 auto; }
-                    .academy-header { margin: 2rem 0; }
-                    .academy-emoji { font-size: 4rem; margin: 1rem 0; }
-                    .courses-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin: 2rem 0; }
-                    .course-card { background: rgba(255,255,255,0.15); border-radius: 20px; padding: 1.5rem; cursor: pointer; transition: all 0.3s; border: 2px solid transparent; }
-                    .course-card:hover { transform: translateY(-5px); border-color: rgba(255,255,255,0.3); }
-                    .course-card.completed { background: rgba(0,255,0,0.2); border-color: rgba(0,255,0,0.5); }
-                    .course-title { font-size: 1.3rem; font-weight: bold; margin-bottom: 1rem; }
-                    .course-description { font-size: 1rem; margin-bottom: 1rem; opacity: 0.9; }
-                    .course-status { font-size: 0.9rem; font-weight: bold; }
-                    .academy-stats { margin: 2rem 0; display: flex; gap: 2rem; justify-content: center; flex-wrap: wrap; }
-                    .lesson-container { text-align: left; max-width: 600px; margin: 0 auto; }
-                    .lesson-header { text-align: center; margin: 2rem 0; }
-                    .lesson-content { background: rgba(255,255,255,0.1); padding: 2rem; border-radius: 20px; margin: 1rem 0; }
-                    .lessons-list { margin: 2rem 0; }
-                    .lesson-item { background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 15px; margin: 0.5rem 0; }
-                    .exam-section { background: rgba(255,215,0,0.2); padding: 2rem; border-radius: 20px; margin: 2rem 0; text-align: center; }
-                    .navigation-btn { padding: 1rem 2rem; margin: 0.5rem; border: none; border-radius: 25px; cursor: pointer; font-size: 1rem; }
-                    .primary-btn { background: linear-gradient(45deg, #ff69b4, #da70d6); color: white; }
-                    .secondary-btn { background: rgba(255,255,255,0.2); color: white; }
-                `;
-                document.head.appendChild(style);
-            }
-
-            // Event listeners for course cards
-            container.querySelectorAll('.course-card').forEach(card => {
-                card.addEventListener('click', () => {
-                    const courseIndex = parseInt(card.getAttribute('data-course'));
-                    currentCourse = courseIndex;
-                    currentLesson = 0;
-                    showCourse();
-                });
-            });
-        };
-
-        const showCourse = () => {
-            const course = courses[currentCourse];
-            
-            container.innerHTML = `
-                <div class="lesson-container">
-                    <div class="lesson-header">
-                        <h2>${course.title}</h2>
-                        <p>${course.description}</p>
-                    </div>
-                    
-                    <div class="lesson-content">
-                        <h3>📚 Programme du cours:</h3>
-                        <div class="lessons-list">
-                            ${course.lessons.map((lesson, index) => `
-                                <div class="lesson-item ${index <= currentLesson ? 'active' : ''}">
-                                    ${lesson}
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                    
-                    <div class="exam-section">
-                        <h3>🎯 Examen Final</h3>
-                        <p><strong>Mission:</strong> ${course.exam}</p>
-                        <p><strong>Récompense:</strong> ${course.grade}</p>
-                        <button class="navigation-btn primary-btn" id="takeExam">✅ Passer l'examen</button>
-                    </div>
-                    
-                    <div class="course-navigation">
-                        <button class="navigation-btn secondary-btn" onclick="app.loadTchoinAcademy(document.getElementById('game-content'))">← Retour aux cours</button>
-                    </div>
-                </div>
-            `;
-
-            document.getElementById('takeExam').addEventListener('click', () => {
-                passCourse();
-            });
-        };
-
-        const passCourse = () => {
-            const course = courses[currentCourse];
-            const examQuestions = [
-                "Es-tu prête à mettre en pratique ce que tu as appris ? 💪",
-                "Promets-tu d'utiliser ces connaissances pour le bien de la tchoinerie ? ✨",
-                "T'engages-tu à partager ta sagesse avec les autres tchoin ? 👯‍♀️"
-            ];
-            
-            let questionIndex = 0;
-            
-            const showQuestion = () => {
-                if (questionIndex >= examQuestions.length) {
-                    completeCourse();
-                    return;
-                }
-                
-                const question = examQuestions[questionIndex];
-                container.innerHTML = `
-                    <div class="exam-container">
-                        <h2>🎓 Examen: ${course.title}</h2>
-                        <div class="exam-question">
-                            <h3>Question ${questionIndex + 1}/${examQuestions.length}</h3>
-                            <p>${question}</p>
-                        </div>
-                        <div class="exam-buttons">
-                            <button class="navigation-btn primary-btn" id="yesBtn">✅ OUI, absolument !</button>
-                            <button class="navigation-btn secondary-btn" id="noBtn">❌ Euh... peut-être ?</button>
-                        </div>
-                    </div>
-                `;
-                
-                document.getElementById('yesBtn').addEventListener('click', () => {
-                    questionIndex++;
-                    this.playBeep(600, 200);
-                    showQuestion();
-                });
-                
-                document.getElementById('noBtn').addEventListener('click', () => {
-                    alert("🤔 Hmm... Je sens que tu n'es pas encore prête ! Repasse l'examen quand tu te sentiras plus confiante ! 💪");
-                    showCourse();
-                });
-            };
-            
-            showQuestion();
-        };
-
-        const completeCourse = () => {
-            const course = courses[currentCourse];
-            completedCourses.push(currentCourse);
-            
-            const completionMessages = [
-                "BRAVO ! Tu viens de level up ! 🎊",
-                "FÉLICITATIONS ! Ton aura vient de s'intensifier ! ✨",
-                "AMAZING ! Tu es maintenant officieellement plus sage ! 🧠",
-                "INCREDIBLE ! Tu maîtrises maintenant cette science ! 🔬"
-            ];
-            
-            const randomMessage = completionMessages[Math.floor(Math.random() * completionMessages.length)];
-            
-            container.innerHTML = `
-                <div class="completion-container">
-                    <h2>🎉 COURS TERMINÉ ! 🎉</h2>
-                    <div class="completion-animation">🏆✨🎓✨🏆</div>
-                    <div class="completion-message">${randomMessage}</div>
-                    <div class="certificate">
-                        <h3>📜 CERTIFICAT OFFICIEL 📜</h3>
-                        <p><strong>${course.grade}</strong></p>
-                        <p>Délivré par la Tchoin Academy</p>
-                        <p>Valide à vie dans l'univers de la tchoinerie ✨</p>
-                    </div>
-                    
-                    <div class="next-steps">
-                        ${completedCourses.length === courses.length ? 
-                            '<h3>🎊 DIPLÔMÉE ! 🎊<br>Tu as terminé TOUS les cours ! Tu es maintenant une Tchoin Academy Graduate ! 👩‍🎓✨</h3>' : 
-                            '<h3>Continue ton cursus pour devenir une vraie experte ! 📚</h3>'
-                        }
-                    </div>
-                    
-                    <div class="actions">
-                        <button class="navigation-btn primary-btn" onclick="app.loadTchoinAcademy(document.getElementById('game-content'))">📚 Retour aux cours</button>
-                        <button class="navigation-btn secondary-btn" onclick="navigator.share && navigator.share({title: 'Certificat Tchoin Academy', text: 'Je viens d\\'obtenir mon ${course.grade} à la Tchoin Academy ! 🎓✨', url: window.location.href})">📱 Partager mon diplôme</button>
-                    </div>
-                </div>
-            `;
-            
-            this.playBeep(800, 500);
-        };
-
-        showCourseMenu();
-    }
 
     // NOUVEAUX MINI-JEUX INTERACTIFS ! 🎮✨
 
@@ -2930,375 +2297,6 @@ Maintenant, sois TchoinGPT dans toute ta splendeur intelligente et délirante ! 
         document.head.appendChild(style);
     }
 
-    loadTchoinSlide(container) {
-        let puzzle = [];
-        let moves = 0;
-        let isWin = false;
-        const size = 3; // 3x3 puzzle
-
-        // Image puzzle en emojis tchoin
-        const originalPuzzle = [
-            ['💅', '👑', '💄'],
-            ['✨', '💎', '🦄'],
-            ['💋', '🎀', '']
-        ];
-
-        container.innerHTML = `
-            <div class="slide-game">
-                <h2>🔄💎 Slide Puzzle Tchoin</h2>
-                <div class="puzzle-info">
-                    <div>Moves: <span id="slide-moves">0</span></div>
-                    <div class="puzzle-preview">
-                        <div class="preview-grid">
-                            <div>💅</div><div>👑</div><div>💄</div>
-                            <div>✨</div><div>💎</div><div>🦄</div>
-                            <div>💋</div><div>🎀</div><div class="empty">🎯</div>
-                        </div>
-                        <div class="preview-label">Objectif</div>
-                    </div>
-                </div>
-                <div class="puzzle-grid" id="puzzle-grid"></div>
-                <div class="slide-controls">
-                    <button class="shuffle-btn" id="slide-shuffle">🔀 Mélanger</button>
-                    <button class="solve-btn" id="slide-solve">💡 Indice</button>
-                </div>
-                <div class="slide-instructions">👆 Tape sur une case adjacente à l'espace vide pour la faire glisser ! 🔄</div>
-            </div>
-        `;
-
-        const gridEl = container.querySelector('#puzzle-grid');
-        const movesEl = container.querySelector('#slide-moves');
-        const shuffleBtn = container.querySelector('#slide-shuffle');
-        const solveBtn = container.querySelector('#slide-solve');
-
-        // Initialiser le puzzle
-        const initPuzzle = () => {
-            puzzle = JSON.parse(JSON.stringify(originalPuzzle));
-            renderPuzzle();
-        };
-
-        // Render le puzzle
-        const renderPuzzle = () => {
-            gridEl.innerHTML = '';
-            puzzle.forEach((row, i) => {
-                row.forEach((cell, j) => {
-                    const cellEl = document.createElement('div');
-                    cellEl.className = cell === '' ? 'puzzle-cell empty' : 'puzzle-cell filled';
-                    cellEl.textContent = cell;
-                    cellEl.dataset.row = i;
-                    cellEl.dataset.col = j;
-                    
-                    if (cell !== '') {
-                        cellEl.addEventListener('click', () => moveCell(i, j));
-                    }
-                    
-                    gridEl.appendChild(cellEl);
-                });
-            });
-        };
-
-        // Trouver la case vide
-        const findEmpty = () => {
-            for (let i = 0; i < size; i++) {
-                for (let j = 0; j < size; j++) {
-                    if (puzzle[i][j] === '') {
-                        return [i, j];
-                    }
-                }
-            }
-        };
-
-        // Vérifier si le mouvement est valide
-        const isValidMove = (row, col) => {
-            const [emptyRow, emptyCol] = findEmpty();
-            return (Math.abs(row - emptyRow) === 1 && col === emptyCol) ||
-                   (Math.abs(col - emptyCol) === 1 && row === emptyRow);
-        };
-
-        // Déplacer une case
-        const moveCell = (row, col) => {
-            if (!isValidMove(row, col) || isWin) return;
-
-            const [emptyRow, emptyCol] = findEmpty();
-            
-            // Échanger les cases
-            puzzle[emptyRow][emptyCol] = puzzle[row][col];
-            puzzle[row][col] = '';
-            
-            moves++;
-            movesEl.textContent = moves;
-            this.playBeep(400, 100);
-            
-            renderPuzzle();
-            checkWin();
-        };
-
-        // Vérifier la victoire
-        const checkWin = () => {
-            let isComplete = true;
-            puzzle.forEach((row, i) => {
-                row.forEach((cell, j) => {
-                    if (originalPuzzle[i][j] !== cell) {
-                        isComplete = false;
-                    }
-                });
-            });
-            
-            if (isComplete && !isWin) {
-                isWin = true;
-                setTimeout(() => showWin(), 500);
-            }
-        };
-
-        // Afficher la victoire
-        const showWin = () => {
-            this.playBeep(600, 500);
-            
-            let message = "";
-            let title = "";
-            
-            if (moves <= 20) {
-                title = "🧠👑 GÉNIE DU PUZZLE !";
-                message = `INCROYABLE ! Tu as résolu le puzzle en seulement \${moves} mouvements ! 🏆✨`;
-            } else if (moves <= 50) {
-                title = "💅 EXCELLENTE LOGIQUE !";
-                message = `Bravo ! \${moves} mouvements, tu maîtrises l'art du puzzle ! 🎯💎`;
-            } else if (moves <= 100) {
-                title = "✨ BONNE PERSÉVÉRANCE !";
-                message = `Bien joué ! \${moves} mouvements, tu as trouvé la solution ! 🦄`;
-            } else {
-                title = "💄 MISSION ACCOMPLIE !";
-                message = `\${moves} mouvements ! L'important c'est d'arriver au bout ! 💪😊`;
-            }
-
-            container.innerHTML += `
-                <div class="slide-win">
-                    <h3>\${title}</h3>
-                    <div class="win-animation">🎉✨🏆✨🎉</div>
-                    <div class="final-moves">Résolu en \${moves} mouvements !</div>
-                    <div class="win-message">\${message}</div>
-                    <button onclick="app.loadTchoinSlide(document.getElementById('game-content'))" class="replay-btn">🔄 Nouveau puzzle</button>
-                </div>
-            `;
-        };
-
-        // Mélanger le puzzle
-        const shufflePuzzle = () => {
-            moves = 0;
-            isWin = false;
-            movesEl.textContent = '0';
-            
-            // Effectuer des mouvements aléatoires valides
-            for (let i = 0; i < 200; i++) {
-                const [emptyRow, emptyCol] = findEmpty();
-                const validMoves = [];
-                
-                // Trouver tous les mouvements valides
-                for (let r = 0; r < size; r++) {
-                    for (let c = 0; c < size; c++) {
-                        if (isValidMove(r, c)) {
-                            validMoves.push([r, c]);
-                        }
-                    }
-                }
-                
-                if (validMoves.length > 0) {
-                    const [moveRow, moveCol] = validMoves[Math.floor(Math.random() * validMoves.length)];
-                    puzzle[emptyRow][emptyCol] = puzzle[moveRow][moveCol];
-                    puzzle[moveRow][moveCol] = '';
-                }
-            }
-            
-            moves = 0;
-            movesEl.textContent = '0';
-            renderPuzzle();
-        };
-
-        // Donner un indice
-        const giveHint = () => {
-            const hints = [
-                "💡 Essaie de placer les coins en premier !",
-                "💡 Les bords sont plus faciles à positionner !",
-                "💡 Commence par le coin supérieur gauche !",
-                "💡 Travaille ligne par ligne !",
-                "💡 Pense plusieurs mouvements à l'avance !",
-                "💡 L'espace vide doit finir en bas à droite !",
-                "💡 Concentre-toi sur une zone à la fois !"
-            ];
-            
-            const randomHint = hints[Math.floor(Math.random() * hints.length)];
-            
-            const hintDiv = document.createElement('div');
-            hintDiv.className = 'hint-popup';
-            hintDiv.textContent = randomHint;
-            hintDiv.style.cssText = `
-                position: fixed;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                background: rgba(255,105,180,0.9);
-                color: white;
-                padding: 1rem 2rem;
-                border-radius: 15px;
-                font-size: 1.1rem;
-                z-index: 1000;
-                animation: hintFade 3s ease-out forwards;
-            `;
-            
-            document.body.appendChild(hintDiv);
-            setTimeout(() => hintDiv.remove(), 3000);
-            
-            this.playBeep(500, 200);
-        };
-
-        shuffleBtn.addEventListener('click', shufflePuzzle);
-        solveBtn.addEventListener('click', giveHint);
-
-        initPuzzle();
-        shufflePuzzle(); // Commencer avec un puzzle mélangé
-
-        // Styles CSS
-        const style = document.createElement('style');
-        style.textContent = `
-            .slide-game { text-align: center; padding: 1rem; }
-            .puzzle-info { 
-                display: flex; 
-                justify-content: space-between; 
-                align-items: center; 
-                margin: 1rem 0; 
-                flex-wrap: wrap;
-            }
-            .puzzle-preview { font-size: 0.7rem; }
-            .preview-grid { 
-                display: grid; 
-                grid-template-columns: repeat(3, 1fr); 
-                gap: 1px; 
-                width: 60px; 
-                margin: 0 auto;
-            }
-            .preview-grid div { 
-                aspect-ratio: 1; 
-                display: flex; 
-                align-items: center; 
-                justify-content: center; 
-                background: rgba(255,255,255,0.1);
-                font-size: 0.8rem;
-            }
-            .preview-grid .empty { background: rgba(255,105,180,0.3); }
-            .preview-label { font-size: 0.7rem; margin-top: 0.5rem; opacity: 0.8; }
-            .puzzle-grid { 
-                display: grid; 
-                grid-template-columns: repeat(3, 1fr); 
-                gap: 5px; 
-                max-width: 300px; 
-                margin: 2rem auto; 
-                aspect-ratio: 1;
-            }
-            .puzzle-cell { 
-                aspect-ratio: 1; 
-                display: flex; 
-                align-items: center; 
-                justify-content: center; 
-                font-size: 2rem; 
-                border-radius: 10px; 
-                transition: all 0.2s;
-            }
-            .puzzle-cell.filled { 
-                background: rgba(255,105,180,0.3); 
-                border: 2px solid rgba(255,255,255,0.5); 
-                cursor: pointer; 
-            }
-            .puzzle-cell.filled:hover { 
-                background: rgba(255,105,180,0.5); 
-                transform: scale(0.95);
-            }
-            .puzzle-cell.empty { 
-                background: rgba(255,105,180,0.1); 
-                border: 2px dashed rgba(255,255,255,0.3); 
-            }
-            .slide-controls { margin: 1rem 0; }
-            .shuffle-btn, .solve-btn, .replay-btn { 
-                background: rgba(255,105,180,0.3); 
-                border: 2px solid rgba(255,255,255,0.5); 
-                color: white; 
-                padding: 0.8rem 1.5rem; 
-                border-radius: 20px; 
-                cursor: pointer; 
-                margin: 0.5rem; 
-            }
-            .slide-instructions { 
-                margin: 1rem 0; 
-                opacity: 0.8; 
-                font-size: 0.9rem; 
-                max-width: 400px;
-                margin-left: auto;
-                margin-right: auto;
-            }
-            .slide-win { 
-                background: rgba(255,105,180,0.2); 
-                padding: 2rem; 
-                border-radius: 15px; 
-                margin: 1rem 0; 
-            }
-            .win-animation { 
-                font-size: 2rem; 
-                margin: 1rem 0; 
-                animation: bounce 1s infinite;
-            }
-            @keyframes hintFade { 
-                0% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
-                20% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-                80% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-                100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
-            }
-            @media (max-width: 480px) {
-                .puzzle-grid { max-width: 250px; }
-                .puzzle-cell { font-size: 1.5rem; }
-                .puzzle-info { flex-direction: column; gap: 1rem; }
-            }
-        `;
-        document.head.appendChild(style);
-    }
-
-    setupRandomPhotos() {
-        // Liste des photos disponibles
-        this.photoList = [
-            "Photo le 18-06-2025 à 15.39 #2.jpg",
-            "Photo le 18-06-2025 à 15.39.jpg",
-            "Photo le 18-06-2025 à 15.41.jpg",
-            "Photo le 18-06-2025 à 15.42 #2.jpg",
-            "Photo le 18-06-2025 à 15.42 #3.jpg",
-            "Photo le 18-06-2025 à 15.42 #5.jpg",
-            "Photo le 18-06-2025 à 15.42.jpg",
-            "Photo le 18-06-2025 à 15.48.jpg",
-            "Photo le 18-06-2025 à 15.54.jpg",
-            "Photo le 18-06-2025 à 15.59 #2.jpg",
-            "Photo le 18-06-2025 à 16.01 #2.jpg",
-            "Photo le 18-06-2025 à 16.03.jpg"
-        ];
-
-        // Créer le conteneur pour les photos flash
-        const photoFlashContainer = document.createElement('div');
-        photoFlashContainer.id = 'photo-flash-container';
-        photoFlashContainer.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            z-index: 9999;
-            pointer-events: none;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-        `;
-        document.body.appendChild(photoFlashContainer);
-
-        // Programmer l'affichage aléatoire des photos
-        this.scheduleRandomPhoto();
-    }
 
     scheduleRandomPhoto() {
         // Attendre entre 30 et 60 secondes avant la prochaine photo (plus espacé pour éviter les erreurs)
@@ -3341,255 +2339,349 @@ Maintenant, sois TchoinGPT dans toute ta splendeur intelligente et délirante ! 
         }, 1500);
     }
 
-    loadTchoinSnake(container) {
-        let snake = [{ x: 10, y: 10 }];
-        let direction = { x: 0, y: 0 };
-        let food = { x: 15, y: 15 };
-        let score = 0;
-        let gameRunning = false;
-        let gameLoop;
-        const gridSize = 20;
-        const tileCount = 20;
+
+    loadSpaceInvaders(container) {
+        let gameState = {
+            running: false,
+            paused: false,
+            player: { x: 200, y: 350, width: 30, height: 20, speed: 5 },
+            bullets: [],
+            invaders: [],
+            invaderBullets: [],
+            score: 0,
+            lives: 3,
+            level: 1,
+            invaderSpeed: 1,
+            invaderDirection: 1
+        };
 
         container.innerHTML = `
-            <div class="snake-game">
-                <h2>🐍💅 Snake Tchoin</h2>
-                <div class="snake-stats">
-                    <div class="score">Score: <span id="snake-score">0</span></div>
-                    <div class="high-score">Best: <span id="snake-high-score">${localStorage.getItem('snakeHighScore') || 0}</span></div>
+            <div class="space-invaders-game">
+                <h2>👾💅 Space Invaders Tchoin</h2>
+                <div class="game-stats">
+                    <div class="stat">Score: <span id="space-score">0</span></div>
+                    <div class="stat">Lives: <span id="space-lives">3</span></div>
+                    <div class="stat">Level: <span id="space-level">1</span></div>
                 </div>
-                <canvas id="snake-canvas" width="400" height="400"></canvas>
-                <div class="snake-controls">
-                    <button id="snake-start" class="snake-btn">🚀 Start Game</button>
-                    <button id="snake-pause" class="snake-btn" style="display: none;">⏸️ Pause</button>
+                <canvas id="space-canvas" width="400" height="400"></canvas>
+                <div class="space-controls">
+                    <button id="space-start" class="space-btn">🚀 Start Game</button>
+                    <button id="space-pause" class="space-btn" style="display: none;">⏸️ Pause</button>
                 </div>
-                <div class="mobile-controls">
-                    <div class="control-row">
-                        <button class="control-btn" data-direction="up">⬆️</button>
-                    </div>
-                    <div class="control-row">
-                        <button class="control-btn" data-direction="left">⬅️</button>
-                        <button class="control-btn" data-direction="right">➡️</button>
-                    </div>
-                    <div class="control-row">
-                        <button class="control-btn" data-direction="down">⬇️</button>
-                    </div>
+                <div class="mobile-space-controls">
+                    <button class="space-control-btn" data-action="left">⬅️</button>
+                    <button class="space-control-btn" data-action="shoot">🔫</button>
+                    <button class="space-control-btn" data-action="right">➡️</button>
                 </div>
-                <div class="snake-instructions">
-                    🎮 Utilise les flèches du clavier ou les boutons pour déplacer le serpent tchoin !<br>
-                    🍎 Mange les fruits pour grandir et gagner des points ! 💅✨
+                <div class="space-instructions">
+                    🎮 Flèches pour bouger, ESPACE pour tirer !<br>
+                    👾 Détruis tous les envahisseurs tchoin ! 💅✨
                 </div>
             </div>
         `;
 
-        const canvas = container.querySelector('#snake-canvas');
+        const canvas = container.querySelector('#space-canvas');
         const ctx = canvas.getContext('2d');
-        const scoreEl = container.querySelector('#snake-score');
-        const highScoreEl = container.querySelector('#snake-high-score');
-        const startBtn = container.querySelector('#snake-start');
-        const pauseBtn = container.querySelector('#snake-pause');
+        const scoreEl = container.querySelector('#space-score');
+        const livesEl = container.querySelector('#space-lives');
+        const levelEl = container.querySelector('#space-level');
+        const startBtn = container.querySelector('#space-start');
+        const pauseBtn = container.querySelector('#space-pause');
 
-        // Emojis pour le snake tchoin
-        const snakeEmojis = ['💅', '👑', '💄', '✨', '💎'];
-        const foodEmojis = ['🍓', '🍎', '🍑', '🍊', '🍇', '🥝', '🍉'];
-        let currentSnakeEmoji = snakeEmojis[Math.floor(Math.random() * snakeEmojis.length)];
-        let currentFoodEmoji = foodEmojis[Math.floor(Math.random() * foodEmojis.length)];
+        // Emojis pour le jeu
+        const playerEmoji = '🦄';
+        const invaderEmojis = ['👾', '💅', '👑', '💄', '✨'];
+        const bulletEmoji = '💎';
+        const invaderBulletEmoji = '💔';
 
-        const drawSnake = () => {
-            ctx.fillStyle = 'rgba(255, 105, 180, 0.8)';
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
-            ctx.lineWidth = 2;
-            
-            snake.forEach((segment, index) => {
-                const x = segment.x * gridSize;
-                const y = segment.y * gridSize;
-                
-                // Corps du serpent avec dégradé
-                if (index === 0) {
-                    // Tête avec emoji
-                    ctx.fillStyle = 'rgba(255, 105, 180, 0.9)';
-                    ctx.fillRect(x, y, gridSize - 2, gridSize - 2);
-                    ctx.strokeRect(x, y, gridSize - 2, gridSize - 2);
-                    
-                    // Emoji sur la tête
-                    ctx.font = '16px Arial';
-                    ctx.textAlign = 'center';
-                    ctx.fillText(currentSnakeEmoji, x + gridSize/2, y + gridSize/2 + 5);
-                } else {
-                    // Corps avec dégradé
-                    const alpha = 0.8 - (index * 0.1);
-                    ctx.fillStyle = `rgba(255, 105, 180, ${Math.max(alpha, 0.3)})`;
-                    ctx.fillRect(x, y, gridSize - 2, gridSize - 2);
-                    ctx.strokeRect(x, y, gridSize - 2, gridSize - 2);
+        const keys = {
+            left: false,
+            right: false,
+            space: false
+        };
+
+        // Initialiser les envahisseurs
+        const initInvaders = () => {
+            gameState.invaders = [];
+            const rows = 5;
+            const cols = 8;
+            const invaderWidth = 25;
+            const invaderHeight = 25;
+            const startX = 50;
+            const startY = 50;
+
+            for (let row = 0; row < rows; row++) {
+                for (let col = 0; col < cols; col++) {
+                    gameState.invaders.push({
+                        x: startX + col * (invaderWidth + 10),
+                        y: startY + row * (invaderHeight + 10),
+                        width: invaderWidth,
+                        height: invaderHeight,
+                        emoji: invaderEmojis[row % invaderEmojis.length],
+                        alive: true
+                    });
+                }
+            }
+        };
+
+        const drawPlayer = () => {
+            ctx.font = '20px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(playerEmoji, gameState.player.x + gameState.player.width/2, gameState.player.y + gameState.player.height);
+        };
+
+        const drawInvaders = () => {
+            ctx.font = '16px Arial';
+            ctx.textAlign = 'center';
+            gameState.invaders.forEach(invader => {
+                if (invader.alive) {
+                    ctx.fillText(invader.emoji, invader.x + invader.width/2, invader.y + invader.height);
                 }
             });
         };
 
-        const drawFood = () => {
-            const x = food.x * gridSize;
-            const y = food.y * gridSize;
-            
-            // Fond coloré pour la nourriture
-            ctx.fillStyle = 'rgba(255, 215, 0, 0.8)';
-            ctx.fillRect(x, y, gridSize - 2, gridSize - 2);
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
-            ctx.lineWidth = 2;
-            ctx.strokeRect(x, y, gridSize - 2, gridSize - 2);
-            
-            // Emoji nourriture
-            ctx.font = '16px Arial';
+        const drawBullets = () => {
+            ctx.font = '12px Arial';
             ctx.textAlign = 'center';
-            ctx.fillStyle = 'white';
-            ctx.fillText(currentFoodEmoji, x + gridSize/2, y + gridSize/2 + 5);
-        };
-
-        const generateFood = () => {
-            let newFood;
-            do {
-                newFood = {
-                    x: Math.floor(Math.random() * tileCount),
-                    y: Math.floor(Math.random() * tileCount)
-                };
-            } while (snake.some(segment => segment.x === newFood.x && segment.y === newFood.y));
             
-            food = newFood;
-            currentFoodEmoji = foodEmojis[Math.floor(Math.random() * foodEmojis.length)];
+            // Balles du joueur
+            gameState.bullets.forEach(bullet => {
+                ctx.fillText(bulletEmoji, bullet.x, bullet.y);
+            });
+            
+            // Balles des envahisseurs
+            gameState.invaderBullets.forEach(bullet => {
+                ctx.fillText(invaderBulletEmoji, bullet.x, bullet.y);
+            });
         };
 
-        const update = () => {
-            if (!gameRunning) return;
-
-            const head = { x: snake[0].x + direction.x, y: snake[0].y + direction.y };
-
-            // Collision avec les murs (téléportation)
-            if (head.x < 0) head.x = tileCount - 1;
-            if (head.x >= tileCount) head.x = 0;
-            if (head.y < 0) head.y = tileCount - 1;
-            if (head.y >= tileCount) head.y = 0;
-
-            // Collision avec soi-même
-            if (snake.some(segment => segment.x === head.x && segment.y === head.y)) {
-                gameOver();
-                return;
+        const updatePlayer = () => {
+            if (keys.left && gameState.player.x > 0) {
+                gameState.player.x -= gameState.player.speed;
             }
+            if (keys.right && gameState.player.x < canvas.width - gameState.player.width) {
+                gameState.player.x += gameState.player.speed;
+            }
+        };
 
-            snake.unshift(head);
+        const updateBullets = () => {
+            // Balles du joueur
+            gameState.bullets = gameState.bullets.filter(bullet => {
+                bullet.y -= 8;
+                return bullet.y > 0;
+            });
+            
+            // Balles des envahisseurs
+            gameState.invaderBullets = gameState.invaderBullets.filter(bullet => {
+                bullet.y += 3;
+                return bullet.y < canvas.height;
+            });
+        };
 
-            // Manger la nourriture
-            if (head.x === food.x && head.y === food.y) {
-                score += 10;
-                scoreEl.textContent = score;
-                this.playBeep(800, 150);
-                generateFood();
-                
-                // Changer l'emoji du serpent parfois
-                if (Math.random() < 0.3) {
-                    currentSnakeEmoji = snakeEmojis[Math.floor(Math.random() * snakeEmojis.length)];
+        const updateInvaders = () => {
+            let changeDirection = false;
+            
+            // Vérifier les bords
+            gameState.invaders.forEach(invader => {
+                if (invader.alive) {
+                    if (invader.x <= 0 || invader.x >= canvas.width - invader.width) {
+                        changeDirection = true;
+                    }
                 }
-            } else {
-                snake.pop();
+            });
+            
+            if (changeDirection) {
+                gameState.invaderDirection *= -1;
+                gameState.invaders.forEach(invader => {
+                    if (invader.alive) {
+                        invader.y += 20; // Descendre
+                    }
+                });
             }
+            
+            // Déplacer les envahisseurs
+            gameState.invaders.forEach(invader => {
+                if (invader.alive) {
+                    invader.x += gameState.invaderSpeed * gameState.invaderDirection;
+                }
+            });
+            
+            // Tirs aléatoires des envahisseurs
+            if (Math.random() < 0.005) {
+                const aliveInvaders = gameState.invaders.filter(inv => inv.alive);
+                if (aliveInvaders.length > 0) {
+                    const shooter = aliveInvaders[Math.floor(Math.random() * aliveInvaders.length)];
+                    gameState.invaderBullets.push({
+                        x: shooter.x + shooter.width/2,
+                        y: shooter.y + shooter.height
+                    });
+                }
+            }
+        };
 
-            draw();
+        const checkCollisions = () => {
+            // Balles du joueur vs envahisseurs
+            gameState.bullets.forEach((bullet, bulletIndex) => {
+                gameState.invaders.forEach((invader, invaderIndex) => {
+                    if (invader.alive && 
+                        bullet.x > invader.x && bullet.x < invader.x + invader.width &&
+                        bullet.y > invader.y && bullet.y < invader.y + invader.height) {
+                        
+                        // Collision détectée
+                        invader.alive = false;
+                        gameState.bullets.splice(bulletIndex, 1);
+                        gameState.score += 10;
+                        scoreEl.textContent = gameState.score;
+                        this.playBeep(800, 100);
+                    }
+                });
+            });
+            
+            // Balles des envahisseurs vs joueur
+            gameState.invaderBullets.forEach((bullet, bulletIndex) => {
+                if (bullet.x > gameState.player.x && bullet.x < gameState.player.x + gameState.player.width &&
+                    bullet.y > gameState.player.y && bullet.y < gameState.player.y + gameState.player.height) {
+                    
+                    // Joueur touché
+                    gameState.invaderBullets.splice(bulletIndex, 1);
+                    gameState.lives--;
+                    livesEl.textContent = gameState.lives;
+                    this.playBeep(300, 300);
+                    
+                    if (gameState.lives <= 0) {
+                        gameOver();
+                    }
+                }
+            });
+            
+            // Vérifier si tous les envahisseurs sont morts
+            const aliveInvaders = gameState.invaders.filter(inv => inv.alive);
+            if (aliveInvaders.length === 0) {
+                nextLevel();
+            }
+            
+            // Vérifier si les envahisseurs atteignent le joueur
+            gameState.invaders.forEach(invader => {
+                if (invader.alive && invader.y + invader.height >= gameState.player.y) {
+                    gameOver();
+                }
+            });
+        };
+
+        const shoot = () => {
+            if (gameState.running && !gameState.paused) {
+                gameState.bullets.push({
+                    x: gameState.player.x + gameState.player.width/2,
+                    y: gameState.player.y
+                });
+                this.playBeep(600, 50);
+            }
         };
 
         const draw = () => {
-            // Background avec dégradé
-            const gradient = ctx.createLinearGradient(0, 0, 400, 400);
-            gradient.addColorStop(0, 'rgba(255, 105, 180, 0.1)');
-            gradient.addColorStop(1, 'rgba(218, 112, 214, 0.1)');
+            // Fond étoilé
+            const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            gradient.addColorStop(0, 'rgba(25, 25, 112, 1)');
+            gradient.addColorStop(1, 'rgba(0, 0, 0, 1)');
             ctx.fillStyle = gradient;
-            ctx.fillRect(0, 0, 400, 400);
-
-            // Grille subtile
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
-            ctx.lineWidth = 1;
-            for (let i = 0; i <= tileCount; i++) {
-                ctx.beginPath();
-                ctx.moveTo(i * gridSize, 0);
-                ctx.lineTo(i * gridSize, 400);
-                ctx.stroke();
-                
-                ctx.beginPath();
-                ctx.moveTo(0, i * gridSize);
-                ctx.lineTo(400, i * gridSize);
-                ctx.stroke();
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Étoiles
+            ctx.fillStyle = 'white';
+            for (let i = 0; i < 50; i++) {
+                const x = (i * 37) % canvas.width;
+                const y = (i * 17) % canvas.height;
+                ctx.fillRect(x, y, 1, 1);
             }
-
-            drawFood();
-            drawSnake();
+            
+            drawPlayer();
+            drawInvaders();
+            drawBullets();
         };
 
-        const gameOver = () => {
-            gameRunning = false;
-            clearInterval(gameLoop);
+        const gameLoop = () => {
+            if (!gameState.running || gameState.paused) return;
             
-            this.playBeep(200, 500);
+            updatePlayer();
+            updateBullets();
+            updateInvaders();
+            checkCollisions();
+            draw();
             
-            // High score
-            const highScore = parseInt(localStorage.getItem('snakeHighScore') || 0);
-            if (score > highScore) {
-                localStorage.setItem('snakeHighScore', score);
-                highScoreEl.textContent = score;
-                this.playBeep(1000, 300);
-                
-                alert(`🏆 NOUVEAU RECORD ! 🏆\nScore: ${score} points\nTu es officiellement la reine du Snake Tchoin ! 👑💅`);
-            } else {
-                let message = "";
-                if (score >= 100) {
-                    message = `💅 EXCELLENT ! ${score} points ! Tu maîtrises l'art du serpent tchoin ! 🐍✨`;
-                } else if (score >= 50) {
-                    message = `✨ PAS MAL ! ${score} points ! Continue comme ça ma belle ! 💄`;
-                } else if (score >= 20) {
-                    message = `🦄 C'EST UN DÉBUT ! ${score} points ! Il faut s'entraîner ! 💪`;
-                } else {
-                    message = `😅 OH NON ! ${score} points... Le serpent avait faim de liberté ! 🐍💔`;
-                }
-                alert(message);
-            }
-            
-            startBtn.style.display = 'block';
-            pauseBtn.style.display = 'none';
-            startBtn.textContent = '🔄 Rejouer';
+            requestAnimationFrame(gameLoop);
         };
 
         const startGame = () => {
-            snake = [{ x: 10, y: 10 }];
-            direction = { x: 0, y: 0 };
-            score = 0;
+            gameState.running = true;
+            gameState.paused = false;
+            gameState.score = 0;
+            gameState.lives = 3;
+            gameState.level = 1;
+            gameState.bullets = [];
+            gameState.invaderBullets = [];
+            gameState.player.x = 200;
+            
             scoreEl.textContent = '0';
-            gameRunning = true;
+            livesEl.textContent = '3';
+            levelEl.textContent = '1';
             
-            generateFood();
-            currentSnakeEmoji = snakeEmojis[Math.floor(Math.random() * snakeEmojis.length)];
-            
+            initInvaders();
             startBtn.style.display = 'none';
             pauseBtn.style.display = 'block';
             
-            gameLoop = setInterval(update, 150);
-            draw();
+            gameLoop();
         };
 
         const pauseGame = () => {
-            gameRunning = !gameRunning;
-            if (gameRunning) {
-                gameLoop = setInterval(update, 150);
-                pauseBtn.textContent = '⏸️ Pause';
-            } else {
-                clearInterval(gameLoop);
+            gameState.paused = !gameState.paused;
+            if (gameState.paused) {
                 pauseBtn.textContent = '▶️ Play';
+            } else {
+                pauseBtn.textContent = '⏸️ Pause';
+                gameLoop();
             }
         };
 
-        const changeDirection = (newDirection) => {
-            if (!gameRunning) return;
+        const nextLevel = () => {
+            gameState.level++;
+            gameState.invaderSpeed += 0.5;
+            levelEl.textContent = gameState.level;
+            initInvaders();
+            this.playBeep(1000, 200);
             
-            // Empêcher de faire demi-tour
-            if (direction.x !== 0 && newDirection.x !== 0) return;
-            if (direction.y !== 0 && newDirection.y !== 0) return;
+            // Message de niveau
+            setTimeout(() => {
+                alert(`🎉 NIVEAU ${gameState.level} ! 🎉\nLes envahisseurs tchoin deviennent plus agressifs ! 👾💅`);
+            }, 100);
+        };
+
+        const gameOver = () => {
+            gameState.running = false;
+            startBtn.style.display = 'block';
+            pauseBtn.style.display = 'none';
+            startBtn.textContent = '🔄 Rejouer';
             
-            direction = newDirection;
-            this.playBeep(400, 50);
+            this.playBeep(200, 500);
+            
+            const highScore = localStorage.getItem('spaceInvadersHighScore') || 0;
+            if (gameState.score > highScore) {
+                localStorage.setItem('spaceInvadersHighScore', gameState.score);
+                setTimeout(() => {
+                    alert(`🏆 NOUVEAU RECORD GALACTIQUE ! 🏆\nScore: ${gameState.score} points\nTu es officiellement la défenseuse de l'univers tchoin ! 👾💅✨`);
+                }, 100);
+            } else {
+                let message = "";
+                if (gameState.score >= 500) {
+                    message = `👾💅 COMMANDANTE SUPRÊME ! ${gameState.score} points ! Tu as sauvé la galaxie ! 🌌✨`;
+                } else if (gameState.score >= 300) {
+                    message = `🚀 PILOTE ÉLITE ! ${gameState.score} points ! L'espace te respecte ! 👑`;
+                } else if (gameState.score >= 100) {
+                    message = `⭐ GUERRIÈRE PROMETTEUSE ! ${gameState.score} points ! Continue l'entraînement ! 💪`;
+                } else {
+                    message = `👾 RECRUE SPATIALE ! ${gameState.score} points ! L'univers a besoin de toi ! 🦄💫`;
+                }
+                setTimeout(() => alert(message), 100);
+            }
         };
 
         // Event listeners
@@ -3598,41 +2690,63 @@ Maintenant, sois TchoinGPT dans toute ta splendeur intelligente et délirante ! 
 
         // Contrôles clavier
         document.addEventListener('keydown', (e) => {
-            if (!gameRunning) return;
+            if (!gameState.running) return;
             
             switch(e.key) {
-                case 'ArrowUp':
-                    e.preventDefault();
-                    changeDirection({ x: 0, y: -1 });
-                    break;
-                case 'ArrowDown':
-                    e.preventDefault();
-                    changeDirection({ x: 0, y: 1 });
-                    break;
                 case 'ArrowLeft':
                     e.preventDefault();
-                    changeDirection({ x: -1, y: 0 });
+                    keys.left = true;
                     break;
                 case 'ArrowRight':
                     e.preventDefault();
-                    changeDirection({ x: 1, y: 0 });
+                    keys.right = true;
                     break;
                 case ' ':
                     e.preventDefault();
-                    pauseGame();
+                    shoot();
+                    break;
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            switch(e.key) {
+                case 'ArrowLeft':
+                    keys.left = false;
+                    break;
+                case 'ArrowRight':
+                    keys.right = false;
                     break;
             }
         });
 
         // Contrôles tactiles
-        container.querySelectorAll('.control-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const dir = btn.dataset.direction;
-                switch(dir) {
-                    case 'up': changeDirection({ x: 0, y: -1 }); break;
-                    case 'down': changeDirection({ x: 0, y: 1 }); break;
-                    case 'left': changeDirection({ x: -1, y: 0 }); break;
-                    case 'right': changeDirection({ x: 1, y: 0 }); break;
+        container.querySelectorAll('.space-control-btn').forEach(btn => {
+            btn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                const action = btn.dataset.action;
+                switch(action) {
+                    case 'left':
+                        keys.left = true;
+                        break;
+                    case 'right':
+                        keys.right = true;
+                        break;
+                    case 'shoot':
+                        shoot();
+                        break;
+                }
+            });
+
+            btn.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                const action = btn.dataset.action;
+                switch(action) {
+                    case 'left':
+                        keys.left = false;
+                        break;
+                    case 'right':
+                        keys.right = false;
+                        break;
                 }
             });
         });
@@ -3640,30 +2754,30 @@ Maintenant, sois TchoinGPT dans toute ta splendeur intelligente et délirante ! 
         // Styles CSS
         const style = document.createElement('style');
         style.textContent = `
-            .snake-game { 
+            .space-invaders-game { 
                 text-align: center; 
                 padding: 1rem; 
                 user-select: none;
             }
-            .snake-stats { 
+            .game-stats { 
                 display: flex; 
                 justify-content: space-around; 
                 margin: 1rem 0; 
-                font-size: 1.2rem; 
+                font-size: 1.1rem; 
                 font-weight: bold;
             }
-            #snake-canvas { 
+            #space-canvas { 
                 border: 3px solid rgba(255, 105, 180, 0.5); 
                 border-radius: 15px; 
-                background: rgba(0, 0, 0, 0.1); 
+                background: black; 
                 margin: 1rem 0;
                 max-width: 100%;
                 height: auto;
             }
-            .snake-controls { 
+            .space-controls { 
                 margin: 1rem 0; 
             }
-            .snake-btn { 
+            .space-btn { 
                 background: rgba(255, 105, 180, 0.3); 
                 border: 2px solid rgba(255, 255, 255, 0.5); 
                 color: white; 
@@ -3674,37 +2788,34 @@ Maintenant, sois TchoinGPT dans toute ta splendeur intelligente et délirante ! 
                 margin: 0.5rem;
                 transition: all 0.3s;
             }
-            .snake-btn:hover { 
+            .space-btn:hover { 
                 background: rgba(255, 105, 180, 0.5); 
                 transform: scale(1.05);
             }
-            .mobile-controls { 
-                display: grid; 
-                gap: 0.5rem; 
-                max-width: 200px; 
-                margin: 1rem auto;
-            }
-            .control-row { 
+            .mobile-space-controls { 
                 display: flex; 
-                justify-content: center; 
-                gap: 0.5rem;
+                justify-content: center;
+                gap: 1rem; 
+                margin: 1rem auto;
+                max-width: 300px;
             }
-            .control-btn { 
+            .space-control-btn { 
                 background: rgba(255, 105, 180, 0.3); 
                 border: 2px solid rgba(255, 255, 255, 0.5); 
                 color: white; 
-                width: 50px; 
-                height: 50px; 
-                border-radius: 10px; 
+                width: 60px; 
+                height: 60px; 
+                border-radius: 15px; 
                 font-size: 1.5rem; 
                 cursor: pointer;
                 transition: all 0.2s;
+                touch-action: manipulation;
             }
-            .control-btn:hover, .control-btn:active { 
+            .space-control-btn:hover, .space-control-btn:active { 
                 background: rgba(255, 105, 180, 0.6); 
                 transform: scale(1.1);
             }
-            .snake-instructions { 
+            .space-instructions { 
                 margin: 1rem 0; 
                 opacity: 0.8; 
                 font-size: 0.9rem; 
@@ -3714,16 +2825,16 @@ Maintenant, sois TchoinGPT dans toute ta splendeur intelligente et délirante ! 
                 line-height: 1.4;
             }
             @media (max-width: 480px) {
-                #snake-canvas { 
+                #space-canvas { 
                     width: 100%; 
                     max-width: 350px;
                 }
-                .snake-stats { 
-                    font-size: 1rem; 
+                .game-stats { 
+                    font-size: 0.9rem; 
                 }
-                .control-btn { 
-                    width: 45px; 
-                    height: 45px; 
+                .space-control-btn { 
+                    width: 50px; 
+                    height: 50px; 
                     font-size: 1.3rem;
                 }
             }
